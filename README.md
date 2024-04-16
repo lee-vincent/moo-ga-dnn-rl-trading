@@ -1,3 +1,10 @@
+# TODO
+sigmoid function to normalize between 0 and 1?
+different activation function variants of ReLU?
+
+
+
+
 # Stock Market AI
 
 This is an artificial intellegence developed via PyTorch that simulates stock trading using the TQQQ(UltraPro QQQ) security. The agent was taught using reinforcement learning with training and testing data extracted from [yahoo_fin](https://theautomatic.net/yahoo_fin-documentation/).
@@ -71,7 +78,7 @@ The script used to create the trading environment that the agent uses to make it
 
 # policy_network.py
 
-The script that creates the simple feed-forward neural network for the artificial intelligence. There are 6 linear layers, which also include activation layers utilizing the ReLU activation function. The first layer consists of 10 nodes, which are the inputs to the neural network. The second layer consists of 5 nodes, the third layer with 10 nodes, the fourth layer with 4 nodess, the fifth layer with 10 nodes, and the sixth and final layer with 3 nodes. The final 3 nodes represent the output for the neural network, which is either a 0 (buy), 1 (hold), or 2(sell) decision.
+The script that creates the simple feed-forward neural network for the artificial intelligence. There are 6 linear layers, which also include activation layers utilizing the    activation function. The first layer consists of 10 nodes, which are the inputs to the neural network. The second layer consists of 5 nodes, the third layer with 10 nodes, the fourth layer with 4 nodess, the fifth layer with 10 nodes, and the sixth and final layer with 3 nodes. The final 3 nodes represent the output for the neural network, which is either a 0 (buy), 1 (hold), or 2(sell) decision.
 
 # trading_problem.py
 
