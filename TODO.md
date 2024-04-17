@@ -1,4 +1,23 @@
-# WIP Plan
+# TODO
+
+
+
+## Eliza
+- consolidate Instructions/installation_and_instructions.pdf into the README
+
+## Jack
+
+## Matt
+
+## Michelle
+
+## Vinnie
+
+
+
+
+
+# Previous Team's Work in Progress
 
 ## Data collection
 1. Collect historical data for TQQQ
