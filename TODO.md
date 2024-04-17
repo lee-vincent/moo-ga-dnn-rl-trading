@@ -1,4 +1,64 @@
-# WIP Plan
+# TODO
+
+## Eliza
+- consolidate Instructions/installation_and_instructions.pdf into the README
+
+## Jack
+
+## Matt
+
+## Michelle
+
+## Vinnie
+AWS has a free tier - could i get everyone set up in a free tier acount?
+
+could use terraform to provision instances or work with the aws-algorithmic-trading repo
+
+
+deployed ubuntu 22.04 LTS
+
+ssh -i ~/.ssh/bastion ubuntu@35.174.208.26
+python3 --version
+Python 3.10.12
+sudo apt update && sudo apt upgrade -y
+or this one? sudo apt-get update && sudo apt-get upgrade -y
+sudo apt install python3-pip -y
+keeps asking for kernal upgrade??
+
+sudo apt-get install python-is-python3
+sudo apt-get install libgl1 -y
+git config --global user.name "Vincent Lee"
+git config --global user.email vinnie@vinnielee.io
+git config --global credential.helper store
+
+
+mkdir ~/repos
+cd ~/repos/
+git clone https://github.com/chesterornes/RL-Trading.git
+cd ./RL-Trading/
+sudo pip3 install -r requirements.txt 
+python3 ./main.py
+
+
+automation workflow
+aws resource creation - quota vcpu increases
+testing automated update and configuration of project on instances
+watched hours of videos https://www.youtube.com/watch?v=9Y3yaoi9rUQ
+
+
+p3.8xlarge $12.2400 hourly $4.9759 hourly
+
+g3.8xlarge	244.0 GiB	32 vCPUs	2	NVIDIA Tesla M60	
+requires different nvidia drivers 
+Data Center Driver For Ubuntu 22.04
+https://www.nvidia.com/download/driverResults.aspx/210922/en-us/
+
+or use pre-installed drivers on Amazon Linux 2 AMI ID: ami-0a8b4201c73c1b68f
+https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+
+
+
+# Previous Team's Work in Progress
 
 ## Data collection
 1. Collect historical data for TQQQ
