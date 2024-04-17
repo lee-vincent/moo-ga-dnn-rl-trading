@@ -10,6 +10,9 @@
 ## Michelle
 
 ## Vinnie
+spending significant time figuring out how to install python 3.12.3 on amazon linux 2
+researching nvidia driver install
+researching best AWS instance types that support GPUs for this use case
 AWS has a free tier - could i get everyone set up in a free tier acount?
 
 could use terraform to provision instances or work with the aws-algorithmic-trading repo
@@ -36,8 +39,8 @@ mkdir ~/repos
 cd ~/repos/
 git clone https://github.com/chesterornes/RL-Trading.git
 cd ./RL-Trading/
-sudo pip3 install -r requirements.txt 
-python3 ./main.py
+pip3.12 install -r requirements.txt 
+python3.12 ./main.py
 
 
 automation workflow
@@ -56,8 +59,32 @@ https://www.nvidia.com/download/driverResults.aspx/210922/en-us/
 or use pre-installed drivers on Amazon Linux 2 AMI ID: ami-0a8b4201c73c1b68f
 https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
 
+for amazon linux 2, need to install python 3.10
+https://techviewleo.com/how-to-install-python-on-amazon-linux-2/
 
-
+```bash
+sudo yum update -y
+sudo yum groupinstall "Development Tools" -y
+sudo yum erase openssl-devel -y
+sudo yum install openssl11 openssl11-devel  libffi-devel bzip2-devel wget tk-devel ncurses-devel uuid-devel.x86_64 readline-devel gdbm-devel xz-devel python3-tkinter.x86_64 -y
+wget https://www.python.org/ftp/python/3.12.3/Python-3.12.3.tgz
+tar -xf Python-3.12.3.tgz
+cd Python-3.12.3/
+./configure --enable-optimizations --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+make -j $(nproc)
+sudo make altinstall
+sudo yum install python3-pip -y
+cd ~
+git config --global user.name "Vincent Lee"
+git config --global user.email vinnie@vinnielee.io
+git config --global credential.helper store
+mkdir ~/repos
+cd ~/repos/
+git clone https://github.com/chesterornes/RL-Trading.git
+cd ./RL-Trading/
+pip3.12 install -r requirements.txt 
+python3.12 ./main.py
+```
 # Previous Team's Work in Progress
 
 ## Data collection
