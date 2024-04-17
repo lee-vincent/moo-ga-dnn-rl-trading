@@ -27,8 +27,6 @@ cd ./RL-Trading/
 sudo pip3 install -r requirements.txt 
 python3 ./main.py
 
-p3.8xlarge $12.2400 hourly $4.9759 hourly
-
 
 
 
