@@ -10,6 +10,7 @@
 ## Michelle
 
 ## Vinnie
+mention all of the libraries/modules in main.py that we all had to learn about
 spending significant time figuring out how to install python 3.12.3 on amazon linux 2
 researching nvidia driver install
 researching best AWS instance types that support GPUs for this use case

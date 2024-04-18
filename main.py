@@ -158,7 +158,7 @@ def train_and_validate(queue, n_pop, n_gen):
 
     generations = history["generation"].values
     objectives = history["objectives"].values
-    # decisions = history["decision_variables"].values
+    decisions = history["decision_variables"].values
     best = history["best"].values
 
     historia = []
