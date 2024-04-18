@@ -243,6 +243,8 @@ if __name__ == '__main__':
     drawdown_threshold = args.drawdown_threshold
 
     # Start training and validation in new process, create visualizations with data from queue
+    #  mp.set_start_method('fork')  #is this going to be needed?
+    # https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))
