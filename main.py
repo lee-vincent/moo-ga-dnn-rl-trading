@@ -83,6 +83,7 @@ def train_and_validate(queue, n_pop, n_gen):
     network = PolicyNetwork(dimensions)
 
     # Check if multiple GPUs are available
+    print(f"{torch.cuda.device_count()} GPUs available.")
     if torch.cuda.device_count() > 1:
         print(f"{torch.cuda.device_count()} GPUs available. Using DataParallel.")
         # Use DataParallel to use multiple GPUs
@@ -91,6 +92,8 @@ def train_and_validate(queue, n_pop, n_gen):
         print("Using a single GPU because you have a sad compute env.")
 
     # Move the model to GPU if available
+    print(f"CUDA available? {torch.cuda.is_available()}")
+    
     network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     # Create the trading environment
@@ -98,7 +101,7 @@ def train_and_validate(queue, n_pop, n_gen):
         data_collector.training_tensor, network, data_collector.training_prices)
 
     # initialize the thread pool and create the runner for ElementwiseProblem parallelization
-    n_threads = 4
+    n_threads = 20
     pool = mp.pool.ThreadPool(n_threads)
     runner = StarmapParallelization(pool.starmap)
 
