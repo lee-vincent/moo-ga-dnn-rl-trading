@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 import datetime as dt
 import time
-from mpl_toolkits.mplot3d import Axes3D
 from pathlib import Path
 from pyrecorder.recorder import Recorder
 from pyrecorder.writers.video import Video
@@ -61,7 +60,7 @@ class Plotter():
 
     def _create_training_plots(self):
         """
-        Creates training plots. 
+        Creates training plots.
         """
         self.training_figs_axs.append(self._create_fig_ax(
             title="Population Outcomes", dimensions=3))
@@ -74,7 +73,7 @@ class Plotter():
 
     def _create_validation_plots(self, x_data: list, y_data: list, z_data: list):
         """
-        Generates scatter of validation outcomes for candidate solutions. 
+        Generates scatter of validation outcomes for candidate solutions.
         """
         fig_3d, ax_3d = self._create_fig_ax(
             "Validation Outcomes", dimensions=3, colorbar=False)
@@ -92,7 +91,7 @@ class Plotter():
 
     def _update_training_plots(self, current_gen: int) -> None:
         """
-        Updates training plots with outcomes from current gen's solutions.   
+        Updates training plots with outcomes from current gen's solutions.
         """
         x_data, y_data, z_data = self.obj_outcomes[-1]
         x_par, y_par, z_par = zip(*self.final_pareto_frontier)
@@ -127,7 +126,7 @@ class Plotter():
 
     def calc_pareto_front(self, outcomes: list) -> list:
         """
-        Returns the pareto front of the outcomes. 
+        Returns the pareto front of the outcomes.
         """
         pareto_front = []
         for point in outcomes:
@@ -157,7 +156,7 @@ class Plotter():
         try:
             matplotlib.use('TkAgg')
             plt.ion()
-        except:
+        except ImportError:
             print("\nContinuing without tkinter backend...\n")
         current_generation = 0
         self._create_training_plots()
