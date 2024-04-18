@@ -1,4 +1,3 @@
-import pandas as pd
 import torch
 
 
@@ -13,16 +12,16 @@ class TradingEnvironment:
     def __init__(self, features, model, closing_prices):
         self.features = features  # The dataset
         self.model = model  # The model
-        self.closing_prices = closing_prices # Closing prices
+        self.closing_prices = closing_prices  # Closing prices
 
         self.initial_balance = 100_000.00  # Initial balance
         self.balance = self.initial_balance  # Balance
         self.max_balance = self.initial_balance  # Max profit
         self.drawdown = 0.00  # Drawdown
         self.shares_owned = 0  # Shares owned
-        self.profit: float = 0.00 # Profit percentage
+        self.profit: float = 0.00  # Profit percentage
         self.num_trades = 0  # Number of trades
-        
+
     def reset(self):
         """Resets the environment."""
         self.balance = self.initial_balance
@@ -52,14 +51,14 @@ class TradingEnvironment:
         Updates max_profit and drawdown.
         Returned values are used to evaluate the individual (multi-objective).
         """
-        
+
         self.reset()
         local_decisions = []
 
         # Simulate trading over the dataset
         for i in range(len(self.features)):
-            
-            feature_vector = self.features[i:i+1] # Get the feature vector for the current day
+
+            feature_vector = self.features[i:i+1]  # Get the feature vector for the current day
 
             feature_vector = feature_vector.to(torch.device(
                 "cuda" if torch.cuda.is_available() else "cpu"))
@@ -73,7 +72,7 @@ class TradingEnvironment:
                 self.shares_owned += shares_bought
                 self.balance -= current_price * shares_bought
                 self.num_trades += 1
-                
+
             elif decision == 2 and self.shares_owned > 0:  # Sell
                 self.balance += current_price * self.shares_owned
                 self.shares_owned = 0
@@ -85,12 +84,11 @@ class TradingEnvironment:
             drawdown_pct = (current_drawdown / self.max_balance) * 100
             self.drawdown = max(self.drawdown, drawdown_pct)
 
-        
         if self.shares_owned > 0:
             self.balance += self.shares_owned * self.closing_prices.iloc[-1]
             self.shares_owned = 0
             self.num_trades += 1
-        
+
         raw_profit = self.balance - self.initial_balance
         scaled_profit = raw_profit / self.initial_balance
         profit_pct = scaled_profit * 100

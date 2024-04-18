@@ -1,11 +1,8 @@
-import os
 from pathlib import Path
 import argparse
 import torch
 import pandas as pd
-import matplotlib.pyplot as plt
 from torch.nn import DataParallel
-from pathlib import Path
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
@@ -13,52 +10,75 @@ from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.optimize import minimize
 import multiprocessing as mp
 from pymoo.core.problem import StarmapParallelization
-from pymoo.visualization.scatter import Scatter
 from data_preparation import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
-import sys
 from yahoo_fin_data import get_data
 from plotter import Plotter
 
+
 def parse_args():
     # Create the parser
-    parser = argparse.ArgumentParser(description="Run trading optimization with optional settings.")
+    parser = argparse.ArgumentParser(
+        description="Run trading optimization with optional settings."
+    )
 
     # Add arguments
-    parser.add_argument('--pop_size', type=int, default=100, help='Population size for the genetic algorithm')
-    parser.add_argument('--n_gen', type=int, default=100, help='Number of generations for the genetic algorithm')
-    parser.add_argument('--profit_threshold', type=float, default=100.0, help='Profit threshold for considering a model worth saving')
-    parser.add_argument('--drawdown_threshold', type=float, default=40.0, help='Drawdown threshold for considering a model worth saving')
+    parser.add_argument(
+        '--pop_size',
+        type=int,
+        default=100,
+        help='Population size for the genetic algorithm'
+    )
+    parser.add_argument(
+        '--n_gen',
+        type=int,
+        default=100,
+        help='Number of generations for the genetic algorithm'
+    )
+    parser.add_argument(
+        '--profit_threshold',
+        type=float,
+        default=100.0,
+        help='Profit threshold for considering a model worth saving'
+    )
+    parser.add_argument(
+        '--drawdown_threshold',
+        type=float,
+        default=40.0,
+        help='Drawdown threshold for considering a model worth saving'
+    )
 
     # Parse the arguments
     args = parser.parse_args()
 
     return args
 
+
 def set_path(script_path: Path, dir_path: str, file_path: str) -> Path:
     """Set output path."""
-    output_dir = script_path / Path(dir_path) 
+    output_dir = script_path / Path(dir_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     new_path = output_dir / file_path
     return new_path
-    
+
 
 def map_params_to_model(model, params):
-        """
-        Decodes (i.e. maps) the genes of an individual (x) into the policy network.
-        """
-        idx = 0 # Starting index in the parameter vector
-        new_state_dict = {} # New state dictionary to load into the model
-        for name, param in model.named_parameters(): # Iterate over each layer's weights and biases in the model
-            num_param = param.numel() # Compute the number of elements in this layer
-            param_values = params[idx:idx + num_param] # Extract the corresponding part of `params`
-            param_values = param_values.reshape(param.size()) # Reshape the extracted values into the correct shape for this layer
-            param_values = torch.Tensor(param_values) # Convert to the appropriate tensor
-            new_state_dict[name] = param_values # Add to the new state dictionary
-            idx += num_param # Update the index
-        model.load_state_dict(new_state_dict) # Load the new state dictionary into the model
+    """
+    Decodes (i.e. maps) the genes of an individual (x) into the policy network.
+    """
+    idx = 0  # Starting index in the parameter vector
+    new_state_dict = {}  # New state dictionary to load into the model
+    for name, param in model.named_parameters():  # Iterate over each layer's weights and biases in the model
+        num_param = param.numel()  # Compute the number of elements in this layer
+        param_values = params[idx:idx + num_param]  # Extract the corresponding part of `params`
+        param_values = param_values.reshape(param.size())  # Reshape the extracted values into the correct shape for this layer
+        param_values = torch.Tensor(param_values)  # Convert to the appropriate tensor
+        new_state_dict[name] = param_values  # Add to the new state dictionary
+        idx += num_param  # Update the index
+    model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
+
 
 def train_and_validate(queue, n_pop, n_gen):
 
@@ -83,6 +103,7 @@ def train_and_validate(queue, n_pop, n_gen):
     network = PolicyNetwork(dimensions)
 
     # Check if multiple GPUs are available
+    print(f"{torch.cuda.device_count()} GPUs available.")
     if torch.cuda.device_count() > 1:
         print(f"{torch.cuda.device_count()} GPUs available. Using DataParallel.")
         # Use DataParallel to use multiple GPUs
@@ -91,20 +112,25 @@ def train_and_validate(queue, n_pop, n_gen):
         print("Using a single GPU because you have a sad compute env.")
 
     # Move the model to GPU if available
+    print(f"CUDA available? {torch.cuda.is_available()}")
+
     network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     # Create the trading environment
     trading_env = TradingEnvironment(
-        data_collector.training_tensor, network, data_collector.training_prices)
+        data_collector.training_tensor,
+        network,
+        data_collector.training_prices)
 
-    # initialize the thread pool and create the runner for ElementwiseProblem parallelization
-    n_threads = 4
+    # initialize the thread pool and create the runner
+    # for ElementwiseProblem parallelization
+    n_threads = 20
     pool = mp.pool.ThreadPool(n_threads)
     runner = StarmapParallelization(pool.starmap)
 
     # Create the trading problem
     problem = TradingProblem(data_collector.training_tensor, network,
-                             trading_env, elementwise_runner=runner)  # Optimization setup
+                             trading_env, elementwise_runner=runner)
 
     # Create the algorithm
     algorithm = NSGA2(
@@ -132,11 +158,11 @@ def train_and_validate(queue, n_pop, n_gen):
 
     generations = history["generation"].values
     objectives = history["objectives"].values
-    decisions = history["decision_variables"].values
+    # decisions = history["decision_variables"].values
     best = history["best"].values
 
     historia = []
-    
+
     for i in range(len(generations)):
         avg_profit, avg_drawdown, avg_trades = 0, 0, 0
         objs = objectives[i]
@@ -149,7 +175,7 @@ def train_and_validate(queue, n_pop, n_gen):
         avg_trades /= len(objs)
         row = [generations[i], avg_profit, avg_drawdown, avg_trades, best[i]]
         historia.append(row)
-    
+
     history_df: pd.DataFrame = pd.DataFrame(
         columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"],
         data=historia
@@ -169,20 +195,19 @@ def train_and_validate(queue, n_pop, n_gen):
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
             profit, drawdown, num_trades = trading_env.simulate_trading()
-            
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
             if ratio > max_ratio and drawdown < 55.0:
                 best = ratio
                 best_network = network.state_dict()
-                
+
             print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
             validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
-        
+
         torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
-        
+
         queue.put(validation_results)
-        
+
         validation_results_df = pd.DataFrame(
             columns=["profit", "drawdown", "num_trades", "ratio", "chromosome"],
             data=validation_results
@@ -190,9 +215,8 @@ def train_and_validate(queue, n_pop, n_gen):
 
         # sort by ratio
         validation_results_df = validation_results_df.sort_values(by="ratio", ascending=False)
-        
-        validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
 
+        validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
 
     pool.close()
 
