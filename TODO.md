@@ -13,6 +13,15 @@
 spending significant time figuring out how to install python 3.12.3 on amazon linux 2
 researching nvidia driver install
 researching best AWS instance types that support GPUs for this use case
+researching best type of nvidia gpu to use for this problem
+had to resive EBS volumes in AWS many times to get it right
+NVIDIA GRID K520
+NVIDIA Tesla M60
+NVIDIA T4 Tensor Core
+NVIDIA A10G
+NVIDIA Tesla K80
+NVIDIA Tesla V100
+
 AWS has a free tier - could i get everyone set up in a free tier acount?
 
 could use terraform to provision instances or work with the aws-algorithmic-trading repo
@@ -59,8 +68,11 @@ https://www.nvidia.com/download/driverResults.aspx/210922/en-us/
 or use pre-installed drivers on Amazon Linux 2 AMI ID: ami-0a8b4201c73c1b68f
 https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
 
-for amazon linux 2, need to install python 3.10
+for amazon linux 2, need to install python 3.12
 https://techviewleo.com/how-to-install-python-on-amazon-linux-2/
+
+Amazon Linux 2 P3
+needs 64GB EBS volume
 
 ```bash
 sudo yum update -y
@@ -84,6 +96,21 @@ git clone https://github.com/chesterornes/RL-Trading.git
 cd ./RL-Trading/
 pip3.12 install -r requirements.txt 
 python3.12 ./main.py
+
+# got nvidia driver too old error so have to remove all nvidia and cuda drivers and re-install
+# remove:
+# install https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=CentOS&target_version=7&target_type=runfile_local
+sudo yum -y erase nvidia cuda
+
+
+sudo yum remove "cuda*" "*cublas*" "*cufft*" "*cufile*" "*curand*" \
+ "*cusolver*" "*cusparse*" "*gds-tools*" "*npp*" "*nvjpeg*" "nsight*" "*nvvm*"
+sudo yum remove "*nvidia*"
+wget https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux.run
+chmod +x cuda_12.4.1_550.54.15_linux.run
+sudo sh cuda_12.4.1_550.54.15_linux.run
+# have to enter 'accept'
+
 ```
 # Previous Team's Work in Progress
 
