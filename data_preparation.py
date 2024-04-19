@@ -35,7 +35,13 @@ class DataCollector:
         print("in _clean_data")
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
-        self.data_df = self.data_df.dropna()
+        # Finds rows without any values in open, high, low, close, adjclose, volume
+        rows_with_missing_values = self.data_df[self.data_df.isnull().all(axis=1)]
+        # Finds rows missing a timestamp
+        index_missing = self.data_df[self.data_df.index.isnull()]
+        rows_to_drop = pd.concat([rows_with_missing_values, index_missing])
+        # Removes rows where all values are missing or just the timestamp is missing
+        self.data_df = self.data_df.dropna(rows_to_drop.index)
         # Store closing prices
         self.closing_prices = self.data_df["close"]
 
