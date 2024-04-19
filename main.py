@@ -81,14 +81,18 @@ def map_params_to_model(model, params):
 
 
 def train_and_validate(queue, n_pop, n_gen):
+    print("in: train_and_validate")
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
+    # VL: ticker should be an arg passed to main.py
     stock_df = pd.DataFrame(get_data("TQQQ"))
+    print(f"stock_df: {stock_df}")
     data_collector = DataCollector(data_df=stock_df)
 
     # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
+    # VL: why are they choosing to drop this in the data_collector module and not in the yahoo_fin_data module like they did with ticker??
     data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
 
     # Get the input shape
@@ -158,6 +162,7 @@ def train_and_validate(queue, n_pop, n_gen):
 
     generations = history["generation"].values
     objectives = history["objectives"].values
+    # VL: flake8 is complaining that decisions is never accessed, so why is it defined here?
     decisions = history["decision_variables"].values
     best = history["best"].values
 
@@ -191,7 +196,9 @@ def train_and_validate(queue, n_pop, n_gen):
     best_network = None
     if population is not None:
         for i, x in enumerate(population):
+            # VL: does map_params_to_model really need to be its own function? hard to tell what's going on
             map_params_to_model(network, x)
+            # VL: why did previous team comment this out?
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
             profit, drawdown, num_trades = trading_env.simulate_trading()
@@ -243,11 +250,13 @@ if __name__ == '__main__':
     drawdown_threshold = args.drawdown_threshold
 
     # Start training and validation in new process, create visualizations with data from queue
-    #  mp.set_start_method('fork')  #is this going to be needed?
-    # https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
+    # VL: mp.set_start_method('fork')  is this going to be needed?
+    # VL: https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
+    print("before: train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))")
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))
+    print("after: train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))")
 
     train_and_validate_process.start()
 
