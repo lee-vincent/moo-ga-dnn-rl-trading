@@ -124,7 +124,7 @@ def train_and_validate(queue, n_pop, n_gen):
 
     # initialize the thread pool and create the runner
     # for ElementwiseProblem parallelization
-    n_threads = 20
+    n_threads = 4
     pool = mp.pool.ThreadPool(n_threads)
     runner = StarmapParallelization(pool.starmap)
 
