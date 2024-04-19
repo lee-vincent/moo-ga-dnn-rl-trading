@@ -32,7 +32,6 @@ class DataCollector:
         """
         Set index as the timestamp and drop rows with missing values.
         """
-        print("in _clean_data")
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
         # Finds rows without any values in open, high, low, close, adjclose, volume
@@ -200,7 +199,7 @@ class DataCollector:
         """
         Adds various stock measurements to determine the velocity, acceleration, and volatility of the asset.
         """
-        print("in prepare_and_calculate_data")
+        
         # defensive programming technique to handle the case where None might be passed accidentally as an argument.
         if columns_to_drop is None:
             columns_to_drop = []

@@ -86,14 +86,12 @@ def map_params_to_model(model, params):
 
 
 def train_and_validate(queue, n_pop, n_gen, ticker):
-    print("in: train_and_validate")
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
     # VL: ticker should be an arg passed to main.py
     stock_df = get_data(ticker)
-    print(f"stock_df: {stock_df}")
     data_collector = DataCollector(data_df=stock_df)
 
     # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
@@ -261,18 +259,11 @@ if __name__ == '__main__':
     # VL: https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
-    print("before: train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))")
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker))
-    print("after: train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))")
-
     train_and_validate_process.start()
-
     plotter.update_while_training()
-
     train_and_validate_process.join()
-
     train_and_validate_process.close()
-
     queue.close()
 
     print("Training and validation process finished.")
