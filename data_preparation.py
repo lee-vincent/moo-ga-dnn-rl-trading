@@ -35,7 +35,6 @@ class DataCollector:
         print("in _clean_data")
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
-        self.data_df.index = pd.to_datetime(self.data_df.index)
         self.data_df = self.data_df.dropna()
         # Store closing prices
         self.closing_prices = self.data_df["close"]
