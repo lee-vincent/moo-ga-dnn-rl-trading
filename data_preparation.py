@@ -41,7 +41,7 @@ class DataCollector:
         index_missing = self.data_df[self.data_df.index.isnull()]
         rows_to_drop = pd.concat([rows_with_missing_values, index_missing])
         # Removes rows where all values are missing or just the timestamp is missing
-        self.data_df = self.data_df.dropna(rows_to_drop.index)
+        self.data_df = self.data_df.drop(rows_to_drop.index)
         # Store closing prices
         self.closing_prices = self.data_df["close"]
 

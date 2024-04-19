@@ -49,7 +49,12 @@ def parse_args():
         default=40.0,
         help='Drawdown threshold for considering a model worth saving'
     )
-
+    parser.add_argument(
+        '--ticker',
+        type=str,
+        default="TQQQ",
+        help='Ticker symbol for the stock data'
+    )
     # Parse the arguments
     args = parser.parse_args()
 
@@ -80,14 +85,14 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen):
+def train_and_validate(queue, n_pop, n_gen, ticker):
     print("in: train_and_validate")
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
     # VL: ticker should be an arg passed to main.py
-    stock_df = get_data("TQQQ")
+    stock_df = get_data(ticker)
     print(f"stock_df: {stock_df}")
     data_collector = DataCollector(data_df=stock_df)
 
@@ -242,12 +247,14 @@ if __name__ == '__main__':
     print(f"Number of generations: {args.n_gen}")
     print(f"Profit threshold: {args.profit_threshold}")
     print(f"Drawdown threshold: {args.drawdown_threshold}")
+    print(f"Ticker symbol: {args.ticker}")
 
     # NSGA-II parameters
     n_pop = args.pop_size
     n_gen = args.n_gen
     profit_threshold = args.profit_threshold
     drawdown_threshold = args.drawdown_threshold
+    ticker = args.ticker
 
     # Start training and validation in new process, create visualizations with data from queue
     # VL: mp.set_start_method('fork')  is this going to be needed?
@@ -255,7 +262,7 @@ if __name__ == '__main__':
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
     print("before: train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))")
-    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker))
     print("after: train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))")
 
     train_and_validate_process.start()
