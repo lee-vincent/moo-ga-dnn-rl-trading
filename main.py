@@ -87,7 +87,7 @@ def train_and_validate(queue, n_pop, n_gen):
 
     # Get and load data
     # VL: ticker should be an arg passed to main.py
-    stock_df = pd.DataFrame(get_data("TQQQ"))
+    stock_df = get_data("TQQQ")
     print(f"stock_df: {stock_df}")
     data_collector = DataCollector(data_df=stock_df)
 
