@@ -124,7 +124,7 @@ class Plotter():
                 # finally record the current visualization to the video
                 rec.record()
 
-    def calc_pareto_front(self, outcomes: list) -> list:
+    def _calc_pareto_front(self, outcomes: list) -> list:
         """
         Returns the pareto front of the outcomes.
         """
@@ -168,9 +168,9 @@ class Plotter():
                 gen_data = self.queue.get()
 
                 # Update pareto collections
-                self.pareto_by_gen.append(self.calc_pareto_front(gen_data))
+                self.pareto_by_gen.append(self._calc_pareto_front(gen_data))
                 self.final_pareto_frontier.extend(self.pareto_by_gen[-1])
-                self.final_pareto_frontier = self.calc_pareto_front(
+                self.final_pareto_frontier = self._calc_pareto_front(
                     self.final_pareto_frontier)
                 # Transform data for plotting since trade count/profit negated for min optimization
                 x_data, y_data, z_data = zip(*gen_data)
