@@ -8,7 +8,7 @@ from pyrecorder.writers.video import Video
 
 
 class Plotter():
-
+    # VL: shouldnt this take in a queue: multiprocessing.Queue because that's what we are passing or doesnt matter in python?
     def __init__(self, queue: object, n_gen: int):
         self.queue = queue  # For IPC
         self.max_gen = n_gen  # Num of gens to run NSGA-II for
