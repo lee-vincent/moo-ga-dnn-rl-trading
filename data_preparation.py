@@ -41,6 +41,7 @@ class DataCollector:
         rows_to_drop = pd.concat([rows_with_missing_values, index_missing])
         # Removes rows where all values are missing or just the timestamp is missing
         self.data_df = self.data_df.drop(rows_to_drop.index)
+        # once you get here, there could be gaps in days and missing data in up to 5 columns
         # Store closing prices
         self.closing_prices = self.data_df["close"]
 
@@ -199,7 +200,7 @@ class DataCollector:
         """
         Adds various stock measurements to determine the velocity, acceleration, and volatility of the asset.
         """
-        
+
         # defensive programming technique to handle the case where None might be passed accidentally as an argument.
         if columns_to_drop is None:
             columns_to_drop = []
