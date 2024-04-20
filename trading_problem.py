@@ -40,7 +40,7 @@ class TradingProblem(ElementwiseProblem):
         Profit and drawdown are calculated based on the trading decisions agent makes in environment.
         The objectives are set to the profit and the negative drawdown.
         """
-        self.decode_model(x)
+        self._decode_model(x)
         profit, drawdown, num_trades = self.environment.simulate_trading()
         out["F"] = np.array([-profit, drawdown, -num_trades])
 
