@@ -28,6 +28,9 @@ might make sense to install NVIDIA Nsight for CUDA utilization monitoring
 
 AWS has a free tier - could i get everyone set up in a free tier acount?
 
+does compilied python modules make a speed difference
+https://oregonstateuniversity-my.sharepoint.com/:p:/g/personal/leevi_oregonstate_edu/Ef0DT3pwcJVOoJtWvW97j1ABBXIVHZdChkwsiDDfygoDKg?e=ZSCJTz
+
 could use terraform to provision instances or work with the aws-algorithmic-trading repo
 
 
