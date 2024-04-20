@@ -32,7 +32,7 @@ does compilied python modules make a speed difference
 https://oregonstateuniversity-my.sharepoint.com/:p:/g/personal/leevi_oregonstate_edu/Ef0DT3pwcJVOoJtWvW97j1ABBXIVHZdChkwsiDDfygoDKg?e=ZSCJTz
 
 pip3 install jupyter
-
+pip3 install torch_tb_profiler
 could use terraform to provision instances or work with the aws-algorithmic-trading repo
 
 
