@@ -8,7 +8,7 @@ from pyrecorder.writers.video import Video
 
 
 class Plotter():
-
+    # VL: shouldnt this take in a queue: multiprocessing.Queue because that's what we are passing or doesnt matter in python?
     def __init__(self, queue: object, n_gen: int):
         self.queue = queue  # For IPC
         self.max_gen = n_gen  # Num of gens to run NSGA-II for
@@ -19,6 +19,15 @@ class Plotter():
         self.previous_frontier = None  # Previous frontier scatter
         self.training_figs_axs = []  # Collection of plots to update while training/validating
         self.script_path = Path(__file__).parent  # Path script is run from
+
+    def _set_path(self, script_path: Path, dir_path: str, file_path: str) -> Path:
+        """
+        Sets output path.
+        """
+        output_dir = script_path / Path(dir_path)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        new_path = output_dir / file_path
+        return new_path
 
     def _create_fig_ax(self, title: str, dimensions: int = 2, xlabel: str = "Profit",
                        ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True,
@@ -84,9 +93,9 @@ class Plotter():
         fig_3d.canvas.draw()
         fig_2d.canvas.draw()
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        fig_3d.savefig(self.set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
+        fig_3d.savefig(self._set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
                                      f"{timestamp}_validation_3D.png"))
-        fig_2d.savefig(self.set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
+        fig_2d.savefig(self._set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
                                      f"{timestamp}_validation_2D.png"))
 
     def _update_training_plots(self, current_gen: int) -> None:
@@ -124,7 +133,7 @@ class Plotter():
                 # finally record the current visualization to the video
                 rec.record()
 
-    def calc_pareto_front(self, outcomes: list) -> list:
+    def _calc_pareto_front(self, outcomes: list) -> list:
         """
         Returns the pareto front of the outcomes.
         """
@@ -139,15 +148,6 @@ class Plotter():
                        for other_point in outcomes):
                 pareto_front.append(point)
         return pareto_front
-
-    def set_path(self, script_path: Path, dir_path: str, file_path: str) -> Path:
-        """
-        Sets output path.
-        """
-        output_dir = script_path / Path(dir_path)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        new_path = output_dir / file_path
-        return new_path
 
     def update_while_training(self):
         """
@@ -168,9 +168,9 @@ class Plotter():
                 gen_data = self.queue.get()
 
                 # Update pareto collections
-                self.pareto_by_gen.append(self.calc_pareto_front(gen_data))
+                self.pareto_by_gen.append(self._calc_pareto_front(gen_data))
                 self.final_pareto_frontier.extend(self.pareto_by_gen[-1])
-                self.final_pareto_frontier = self.calc_pareto_front(
+                self.final_pareto_frontier = self._calc_pareto_front(
                     self.final_pareto_frontier)
                 # Transform data for plotting since trade count/profit negated for min optimization
                 x_data, y_data, z_data = zip(*gen_data)
@@ -188,9 +188,7 @@ class Plotter():
         counter = 0
         for fig_ax in self.training_figs_axs:
             counter += 1
-            fig_ax[0].savefig(self.set_path(self.script_path,
-                                            f"Output/performance_log/ngen_{self.max_gen}",
-                                            f"{timestamp}_training_{counter}.png"))
+            fig_ax[0].savefig(self._set_path(self.script_path, f"Output/performance_log/ngen_{self.max_gen}", f"{timestamp}_training_{counter}.png"))
         try:
             self._create_training_outcomes_video()
         except:

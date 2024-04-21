@@ -49,7 +49,12 @@ def parse_args():
         default=40.0,
         help='Drawdown threshold for considering a model worth saving'
     )
-
+    parser.add_argument(
+        '--ticker',
+        type=str,
+        default="TQQQ",
+        help='Ticker symbol for the stock data'
+    )
     # Parse the arguments
     args = parser.parse_args()
 
@@ -80,15 +85,17 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen):
+def train_and_validate(queue, n_pop, n_gen, ticker):
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
-    stock_df = pd.DataFrame(get_data("TQQQ"))
+    # VL: ticker should be an arg passed to main.py
+    stock_df = get_data(ticker)
     data_collector = DataCollector(data_df=stock_df)
 
     # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
+    # VL: why are they choosing to drop this in the data_collector module and not in the yahoo_fin_data module like they did with ticker??
     data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
 
     # Get the input shape
@@ -124,7 +131,7 @@ def train_and_validate(queue, n_pop, n_gen):
 
     # initialize the thread pool and create the runner
     # for ElementwiseProblem parallelization
-    n_threads = 20
+    n_threads = 4
     pool = mp.pool.ThreadPool(n_threads)
     runner = StarmapParallelization(pool.starmap)
 
@@ -158,7 +165,8 @@ def train_and_validate(queue, n_pop, n_gen):
 
     generations = history["generation"].values
     objectives = history["objectives"].values
-    # decisions = history["decision_variables"].values
+    # VL: flake8 is complaining that decisions is never accessed, so why is it defined here?
+    decisions = history["decision_variables"].values
     best = history["best"].values
 
     historia = []
@@ -191,7 +199,9 @@ def train_and_validate(queue, n_pop, n_gen):
     best_network = None
     if population is not None:
         for i, x in enumerate(population):
+            # VL: does map_params_to_model really need to be its own function? hard to tell what's going on
             map_params_to_model(network, x)
+            # VL: why did previous team comment this out?
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
             profit, drawdown, num_trades = trading_env.simulate_trading()
@@ -235,26 +245,25 @@ if __name__ == '__main__':
     print(f"Number of generations: {args.n_gen}")
     print(f"Profit threshold: {args.profit_threshold}")
     print(f"Drawdown threshold: {args.drawdown_threshold}")
+    print(f"Ticker symbol: {args.ticker}")
 
     # NSGA-II parameters
     n_pop = args.pop_size
     n_gen = args.n_gen
     profit_threshold = args.profit_threshold
     drawdown_threshold = args.drawdown_threshold
+    ticker = args.ticker
 
     # Start training and validation in new process, create visualizations with data from queue
+    # VL: mp.set_start_method('fork')  is this going to be needed?
+    # VL: https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
-    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen))
-
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker))
     train_and_validate_process.start()
-
     plotter.update_while_training()
-
     train_and_validate_process.join()
-
     train_and_validate_process.close()
-
     queue.close()
 
     print("Training and validation process finished.")

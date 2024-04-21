@@ -30,12 +30,18 @@ class DataCollector:
 
     def _clean_data(self) -> None:
         """
-        Remove set index as the timestamp and drop rows with missing values.
+        Set index as the timestamp and drop rows with missing values.
         """
         # Set index as timestamp
         self.data_df = self.data_df.set_index("timestamp")
-        self.data_df.index = pd.to_datetime(self.data_df.index)
-        self.data_df = self.data_df.dropna()
+        # Finds rows without any values in open, high, low, close, adjclose, volume
+        rows_with_missing_values = self.data_df[self.data_df.isnull().all(axis=1)]
+        # Finds rows missing a timestamp
+        index_missing = self.data_df[self.data_df.index.isnull()]
+        rows_to_drop = pd.concat([rows_with_missing_values, index_missing])
+        # Removes rows where all values are missing or just the timestamp is missing
+        self.data_df = self.data_df.drop(rows_to_drop.index)
+        # once you get here, there could be gaps in days and missing data in up to 5 columns
         # Store closing prices
         self.closing_prices = self.data_df["close"]
 
@@ -194,6 +200,8 @@ class DataCollector:
         """
         Adds various stock measurements to determine the velocity, acceleration, and volatility of the asset.
         """
+
+        # defensive programming technique to handle the case where None might be passed accidentally as an argument.
         if columns_to_drop is None:
             columns_to_drop = []
         self._clean_data()
@@ -206,9 +214,8 @@ class DataCollector:
         # print("data_shape", self.data_df.shape)
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.data_df.values, dtype=torch.float32)
-        
+
         # Split data into training and testing
         split_index = pd.to_datetime('2022-01-01').normalize()
         print("split_index", split_index, "type", type(split_index))
         self._split_data(split_index)
-        

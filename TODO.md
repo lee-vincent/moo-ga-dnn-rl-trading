@@ -10,6 +10,8 @@
 ## Michelle
 
 ## Vinnie
+spent time re-writing the yahoo_fin_data module to be ticker agnostic
+mention all of the libraries/modules in main.py that we all had to learn about
 spending significant time figuring out how to install python 3.12.3 on amazon linux 2
 researching nvidia driver install
 researching best AWS instance types that support GPUs for this use case
@@ -26,10 +28,45 @@ might make sense to install NVIDIA Nsight for CUDA utilization monitoring
 
 AWS has a free tier - could i get everyone set up in a free tier acount?
 
+does compilied python modules make a speed difference
+https://oregonstateuniversity-my.sharepoint.com/:p:/g/personal/leevi_oregonstate_edu/Ef0DT3pwcJVOoJtWvW97j1ABBXIVHZdChkwsiDDfygoDKg?e=ZSCJTz
+
+pip3 install jupyter
+pip3 install torch_tb_profiler
 could use terraform to provision instances or work with the aws-algorithmic-trading repo
 
 
-deployed ubuntu 22.04 LTS with 64GB EBS
+## data normalization
+Example Normalization Process
+Given your dataset with close_price, volume, price_velocity, and price_acceleration, here’s how you could apply StandardScaler:
+```python
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+# Example DataFrame
+data = {
+    'close_price': [120, 130, 125, 128, 132],
+    'volume': [1500, 1600, 1580, 1620, 1700],
+    'price_velocity': [-0.1, 0.2, 0.1, -0.2, 0.15],
+    'price_acceleration': [-0.05, 0.03, 0.02, -0.01, 0.04]
+}
+df = pd.DataFrame(data)
+
+# Initialize the StandardScaler
+scaler = StandardScaler()
+
+# Fit and transform the data
+scaled_features = scaler.fit_transform(df)
+
+# Create a new DataFrame with the scaled features
+scaled_df = pd.DataFrame(scaled_features, columns=df.columns)
+
+print(scaled_df)
+
+```
+
+
+## deployed ubuntu 22.04 LTS with 64GB EBS
 https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#system-requirements
 follow the ubuntu 22.04 requirements
 Ubuntu 22.04.z (z <= 3) LTS
