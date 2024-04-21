@@ -16,6 +16,13 @@ from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
 from yahoo_fin_data import get_data
 from plotter import Plotter
+import builtins
+import datetime
+
+
+def timestamped_print(*args, **kwargs):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    builtins.print(f"{now}: ", *args, **kwargs)
 
 
 def parse_args():
@@ -101,7 +108,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
     # Get the input shape
     input_shape = data_collector.data_tensor.shape[1]
 
-    print("input_shape (main)", input_shape)
+    timestamped_print("input_shape (main)", input_shape)
 
     # Define the dimensions of the policy network
     dimensions = [input_shape, 64, 32, 16, 8, 4, 3]
@@ -110,20 +117,21 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
     network = PolicyNetwork(dimensions)
 
     # Check if multiple GPUs are available
-    print(f"{torch.cuda.device_count()} GPUs available.")
+    timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
     if torch.cuda.device_count() > 1:
-        print(f"{torch.cuda.device_count()} GPUs available. Using DataParallel.")
+        timestamped_print(f"{torch.cuda.device_count()} GPUs available. Using DataParallel.")
         # Use DataParallel to use multiple GPUs
         network = DataParallel(network)
     else:
-        print("Using a single GPU because you have a sad compute env.")
+        timestamped_print("Using a single GPU because you have a sad compute env.")
 
     # Move the model to GPU if available
-    print(f"CUDA available? {torch.cuda.is_available()}")
+    timestamped_print(f"CUDA available? {torch.cuda.is_available()}")
 
     network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     # Create the trading environment
+    timestamped_print("creating trading environment")
     trading_env = TradingEnvironment(
         data_collector.training_tensor,
         network,
@@ -132,13 +140,16 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
     # initialize the thread pool and create the runner
     # for ElementwiseProblem parallelization
     n_threads = 4
+    timestamped_print("pool = mp.pool.ThreadPool(n_threads)")
     pool = mp.pool.ThreadPool(n_threads)
+    timestamped_print("runner = StarmapParallelization(pool.starmap)")
     runner = StarmapParallelization(pool.starmap)
 
+    timestamped_print("Create the trading problem")
     # Create the trading problem
     problem = TradingProblem(data_collector.training_tensor, network,
                              trading_env, elementwise_runner=runner)
-
+    timestamped_print("Create the algorithm")
     # Create the algorithm
     algorithm = NSGA2(
         pop_size=n_pop,
@@ -147,9 +158,10 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
         mutation=PM(prob=0.2, eta=20),
         eliminate_duplicates=True
     )
-
+    timestamped_print("performance_logger = PerformanceLogger(queue)")
     performance_logger = PerformanceLogger(queue)
 
+    timestamped_print("Run the optimization")
     # Run the optimization
     res = minimize(
         problem,
@@ -159,6 +171,8 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
         verbose=True,
         save_history=True
     )
+
+    timestamped_print("after Run the optimization")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
     history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
@@ -204,6 +218,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
             # VL: why did previous team comment this out?
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
+            timestamped_print("trading_env.simulate_trading")
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
@@ -211,9 +226,9 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
                 best = ratio
                 best_network = network.state_dict()
 
-            print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
+            timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
             validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
-
+        timestamped_print("torch.save(best_network")
         torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
 
         queue.put(validation_results)
@@ -241,11 +256,11 @@ if __name__ == '__main__':
     args = parse_args()
 
     # Access arguments like this
-    print(f"Population size: {args.pop_size}")
-    print(f"Number of generations: {args.n_gen}")
-    print(f"Profit threshold: {args.profit_threshold}")
-    print(f"Drawdown threshold: {args.drawdown_threshold}")
-    print(f"Ticker symbol: {args.ticker}")
+    timestamped_print(f"Population size: {args.pop_size}")
+    timestamped_print(f"Number of generations: {args.n_gen}")
+    timestamped_print(f"Profit threshold: {args.profit_threshold}")
+    timestamped_print(f"Drawdown threshold: {args.drawdown_threshold}")
+    timestamped_print(f"Ticker symbol: {args.ticker}")
 
     # NSGA-II parameters
     n_pop = args.pop_size
@@ -259,11 +274,23 @@ if __name__ == '__main__':
     # VL: https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
+
+    timestamped_print("train_and_validate_process = mp.Process.")
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker))
+
+    timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()
+
+    timestamped_print("plotter.update_while_training()")
     plotter.update_while_training()
+
+    timestamped_print("train_and_validate_process.join()")
     train_and_validate_process.join()
+
+    timestamped_print("train_and_validate_process.close()")
     train_and_validate_process.close()
+
+    timestamped_print("queue.close()")
     queue.close()
 
-    print("Training and validation process finished.")
+    timestamped_print("Training and validation process finished.")

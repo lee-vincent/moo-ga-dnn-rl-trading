@@ -10,6 +10,18 @@
 ## Michelle
 
 ## Vinnie
+try a v100 on ubuntu python3.10, try compiling 3.12 on ubuntu, then try lowering code base to python 3.8 for running on rabbit
+
+Current Data Date Ranges
+stock data range	    2011-01-01 - 2023-12-31
+training_tensor range 	2011-01-01 - 2022-01-01
+testing_tensor range	2022-01-02 - 2023-12-31
+
+Current Data Dates
+stock data range	    2011-01-01 - 2023-12-31
+training_tensor range 	2011-01-01 - 2022-01-01
+testing_tensor range	2022-01-02 - 2023-12-31
+
 spent time re-writing the yahoo_fin_data module to be ticker agnostic
 mention all of the libraries/modules in main.py that we all had to learn about
 spending significant time figuring out how to install python 3.12.3 on amazon linux 2
