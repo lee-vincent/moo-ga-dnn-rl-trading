@@ -18,6 +18,7 @@ from yahoo_fin_data import get_data
 from plotter import Plotter
 import builtins
 import datetime
+import os
 
 
 def timestamped_print(*args, **kwargs):
@@ -139,7 +140,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
 
     # initialize the thread pool and create the runner
     # for ElementwiseProblem parallelization
-    n_threads = 4
+    n_threads = os.cpu_count()
     timestamped_print("pool = mp.pool.ThreadPool(n_threads)")
     pool = mp.pool.ThreadPool(n_threads)
     timestamped_print("runner = StarmapParallelization(pool.starmap)")

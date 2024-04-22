@@ -11,7 +11,7 @@
 
 ## Vinnie
 try a v100 on ubuntu python3.10, try compiling 3.12 on ubuntu, then try lowering code base to python 3.8 for running on rabbit
-
+drop un-needed columns OHLV - and change close to adjclose
 Current Data Date Ranges
 stock data range        2011-01-01 -> 2023-12-31
 training_tensor range   2011-01-01 -> 2022-01-01
