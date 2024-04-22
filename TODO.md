@@ -13,14 +13,22 @@
 try a v100 on ubuntu python3.10, try compiling 3.12 on ubuntu, then try lowering code base to python 3.8 for running on rabbit
 
 Current Data Date Ranges
-stock data range	    2011-01-01 - 2023-12-31
-training_tensor range 	2011-01-01 - 2022-01-01
-testing_tensor range	2022-01-02 - 2023-12-31
+stock data range        2011-01-01 -> 2023-12-31
+training_tensor range   2011-01-01 -> 2022-01-01
+testing_tensor range    2022-01-02 -> 2023-12-31
 
-Current Data Dates
-stock data range	    2011-01-01 - 2023-12-31
-training_tensor range 	2011-01-01 - 2022-01-01
-testing_tensor range	2022-01-02 - 2023-12-31
+Proposed Data Date Ranges
+stock data range        2011-01-01 -> DATE_PREVIOUS_MARKET_CLOSE
+calculating DATE_PREVIOUS_MARKET_CLOSE:
+DAYS_STOCK_MARKET_OPEN=[Monday,Tuesday,...,Friday]
+TODAY is Monday 4-22-2024 
+if TODAY in DAYS_STOCK_MARKET_OPEN
+then DATE_PREVIOUS_MARKET_CLOSE = (TODAY - 1) = Friday 4-19-2024
+training_tensor range     2011-01-01 - 2022-01-01
+testing_tensor range    2022-01-02 - DATE_PREVIOUS_MARKET_CLOSE
+DAY_TO_RUN_INFERENCE_ON = TODAY
+
+always test on the last 365 days, and everything before going back to 2011 is training
 
 spent time re-writing the yahoo_fin_data module to be ticker agnostic
 mention all of the libraries/modules in main.py that we all had to learn about
