@@ -85,7 +85,7 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, ticker):
+def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -207,7 +207,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
-            if ratio > max_ratio and drawdown < 55.0:
+            if ratio > max_ratio and profit > profit_threshold and drawdown < drawdown_threshold:
                 best = ratio
                 best_network = network.state_dict()
 
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     # VL: https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
     plotter = Plotter(queue, n_gen)
-    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker))
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold))
     train_and_validate_process.start()
     plotter.update_while_training()
     train_and_validate_process.join()
