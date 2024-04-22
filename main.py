@@ -16,14 +16,8 @@ from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
 from yahoo_fin_data import get_data
 from plotter import Plotter
-import builtins
-import datetime
 import os
-
-
-def timestamped_print(*args, **kwargs):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    builtins.print(f"{now}: ", *args, **kwargs)
+from timestamped_print import timestamped_print
 
 
 def parse_args():
@@ -166,7 +160,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
     # Run the optimization
     res = minimize(
         problem,
-        algorithm,
+        algorithm, # this calls TradingProblem._evaluate which calls TradingEnvironment.simulate_trading
         ('n_gen', n_gen),
         callback=performance_logger,
         verbose=True,
