@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+import datetime
 import torch
 import pandas as pd
 from torch.nn import DataParallel
@@ -18,6 +19,7 @@ from yahoo_fin_data import get_data
 from plotter import Plotter
 import os
 from timestamped_print import timestamped_print
+from model_dates import ModelDates
 
 
 def parse_args():
@@ -57,6 +59,17 @@ def parse_args():
         default="TQQQ",
         help='Ticker symbol for the stock data'
     )
+    parser.add_argument(
+        '--training_start_date',
+        type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'),
+        default=datetime.datetime(2011, 1, 1),
+        help='The date in the past the model will be trained from in YYYY-MM-DD format')
+    parser.add_argument(
+        '--save_data',
+        action='store_true',  # This sets the flag to True if it is present.
+        default=False,
+        help='Save the raw dataset to csv: open, high, low, close, adjclose, volume'
+    )
 
     # Parse the arguments
     args = parser.parse_args()
@@ -88,7 +101,7 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, ticker):
+def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -252,28 +265,24 @@ if __name__ == '__main__':
 
     args = parse_args()
 
-    # Access arguments like this
+    model_dates = ModelDates(args.training_start_date)
+
     timestamped_print(f"Population size: {args.pop_size}")
     timestamped_print(f"Number of generations: {args.n_gen}")
     timestamped_print(f"Profit threshold: {args.profit_threshold}")
     timestamped_print(f"Drawdown threshold: {args.drawdown_threshold}")
     timestamped_print(f"Ticker symbol: {args.ticker}")
+    timestamped_print(f"Training Start Date: {model_dates.training_start_date}")
+    timestamped_print(f"Training End Date: {model_dates.training_end_date}")
+    timestamped_print(f"Testing Start Date: {model_dates.testing_start_date}")
+    timestamped_print(f"Testing End Date: {model_dates.testing_end_date}")
+    timestamped_print(f"Save Data: {args.save_data}")
 
-    # NSGA-II parameters
-    n_pop = args.pop_size
-    n_gen = args.n_gen
-    profit_threshold = args.profit_threshold
-    drawdown_threshold = args.drawdown_threshold
-    ticker = args.ticker
-
-    # Start training and validation in new process, create visualizations with data from queue
-    # VL: mp.set_start_method('fork')  is this going to be needed?
-    # VL: https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
-    plotter = Plotter(queue, n_gen)
+    plotter = Plotter(queue, args.n_gen)
 
     timestamped_print("train_and_validate_process = mp.Process.")
-    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker))
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, args.pop_size, args.n_gen, args.ticker, args.profit_threshold, args.drawdown_threshold))
 
     timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()
