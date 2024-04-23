@@ -11,7 +11,6 @@ from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.optimize import minimize
 import multiprocessing as mp
 from pymoo.core.problem import StarmapParallelization
-# from data_preparation import DataCollector
 from prepare_data import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
@@ -103,21 +102,19 @@ def map_params_to_model(model, params):
 
 
 # def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
-def train_and_validate(queue, n_pop, n_gen, stock_df, profit_threshold, drawdown_threshold):
+def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data):
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
-    # VL: ticker should be an arg passed to main.py
-    # stock_df = get_data(ticker)
-    # data_collector = DataCollector(data_df=stock_df)
-    data_collector = DataCollector(data, model_dates.training_end_date)
+    data = fetch_data(ticker, training_start_date, testing_end_date, save_data)
 
-    # data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
+    # Manipulate data and calculate stock measures
+    prepared_data = DataCollector(data, training_end_date)
 
     # Get the input shape
-    input_shape = data_collector.data_tensor.shape[1]
-    timestamped_print("data_collector.data_tensor.shape[1]", data_collector.data_tensor.shape[1])
+    input_shape = prepared_data.data_tensor.shape[1]
+    timestamped_print("data_collector.data_tensor.shape[1]", prepared_data.data_tensor.shape[1])
     timestamped_print("input_shape (main)", input_shape)
 
     # Define the dimensions of the policy network
@@ -143,9 +140,9 @@ def train_and_validate(queue, n_pop, n_gen, stock_df, profit_threshold, drawdown
     # Create the trading environment
     timestamped_print("creating trading environment")
     trading_env = TradingEnvironment(
-        data_collector.training_tensor,
+        prepared_data.training_tensor,
         network,
-        data_collector.training_prices)
+        prepared_data.training_prices)
 
     # initialize the thread pool and create the runner
     # for ElementwiseProblem parallelization
@@ -157,7 +154,7 @@ def train_and_validate(queue, n_pop, n_gen, stock_df, profit_threshold, drawdown
 
     timestamped_print("Create the trading problem")
     # Create the trading problem
-    problem = TradingProblem(data_collector.training_tensor, network,
+    problem = TradingProblem(prepared_data.training_tensor, network,
                              trading_env, elementwise_runner=runner)
     timestamped_print("Create the algorithm")
     # Create the algorithm
@@ -215,8 +212,8 @@ def train_and_validate(queue, n_pop, n_gen, stock_df, profit_threshold, drawdown
     )
     history_df.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}_avg.csv"))
 
-    trading_env.set_features(data_collector.testing_tensor)
-    trading_env.set_closing_prices(data_collector.testing_prices)
+    trading_env.set_features(prepared_data.testing_tensor)
+    trading_env.set_closing_prices(prepared_data.testing_prices)
     population = None if res.pop is None else res.pop.get("X")
 
     validation_results = []
@@ -280,12 +277,20 @@ if __name__ == '__main__':
     timestamped_print(f"Save Data: {args.save_data}")
 
     # stock_df = get_data(args.ticker)
-    data = fetch_data(args.ticker, model_dates.training_start_date, model_dates.testing_end_date, args.save_data)
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
 
     timestamped_print("train_and_validate_process = mp.Process.")
-    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, args.pop_size, args.n_gen, data, args.profit_threshold, args.drawdown_threshold))
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue,
+                                                                             args.pop_size,
+                                                                             args.n_gen,
+                                                                             args.ticker,
+                                                                             args.profit_threshold,
+                                                                             args.drawdown_threshold,
+                                                                             model_dates.training_start_date,
+                                                                             model_dates.training_end_date,
+                                                                             model_dates.testing_end_date,
+                                                                             args.save_data))
 
     timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()
