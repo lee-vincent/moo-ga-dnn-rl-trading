@@ -17,7 +17,7 @@ from trading_environment import TradingEnvironment
 from yahoo_fin_data import get_data
 from plotter import Plotter
 import os
-from print_options import DEBUG_PRINTING, timestamped_print
+from timestamped_print import timestamped_print
 
 
 def parse_args():
@@ -57,12 +57,7 @@ def parse_args():
         default="TQQQ",
         help='Ticker symbol for the stock data'
     )
-    parser.add_argument(
-        '--debug_print',
-        action='store_true',  # This sets the flag to True if it is present.
-        default=False,
-        help='Show detailed debug print statements'
-    )
+
     # Parse the arguments
     args = parser.parse_args()
 
@@ -182,6 +177,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
     objectives = history["objectives"].values
     # VL: flake8 is complaining that decisions is never accessed, so why is it defined here?
     decisions = history["decision_variables"].values
+    timestamped_print("decisions", decisions)
     best = history["best"].values
 
     historia = []
@@ -255,7 +251,6 @@ if __name__ == '__main__':
     """
 
     args = parse_args()
-    print_options.DEBUG_PRINTING = args.debug_print
 
     # Access arguments like this
     timestamped_print(f"Population size: {args.pop_size}")

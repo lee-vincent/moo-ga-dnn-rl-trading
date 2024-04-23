@@ -1,5 +1,4 @@
 import torch
-from print_options import debug_print
 
 
 class TradingEnvironment:
@@ -57,16 +56,11 @@ class TradingEnvironment:
         local_decisions = []
 
         # Simulate trading over the dataset
-        debug_print("TradingEnvironment.len(self.features) = ", len(self.features))
         for i in range(len(self.features)):  # this is all the rows in  training_tqqq_prepared.csv
-            debug_print("TradingEnvironment.i = ", i)
             feature_vector = self.features[i:i+1]  # Get the feature vector for the current day
-            debug_print("TradingEnvironment.feature_vector = ", feature_vector)
             feature_vector = feature_vector.to(torch.device(
                 "cuda" if torch.cuda.is_available() else "cpu"))
-            debug_print("TradingEnvironment.model = ", self.model)
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
-            debug_print("TradingEnvironment.decision = ", decision)
             local_decisions.append(decision)
             current_price = self.closing_prices.iloc[i]
 
