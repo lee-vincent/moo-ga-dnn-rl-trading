@@ -23,4 +23,6 @@ class PolicyNetwork(nn.Module):
 
     def forward(self, x):
         """Forward pass of the neural network."""
+        print("PolicyNetwork.forward")
+        print("PolicyNetwork.forward.self.network(x)", self.network(x))
         return self.network(x)
