@@ -214,8 +214,6 @@ class DataCollector:
         # print("data_shape", self.data_df.shape)
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.data_df.values, dtype=torch.float32)
-
         # Split data into training and testing
         split_index = pd.to_datetime('2022-01-01').normalize()
-        print("split_index", split_index, "type", type(split_index))
         self._split_data(split_index)

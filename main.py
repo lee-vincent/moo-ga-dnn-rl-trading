@@ -17,7 +17,7 @@ from trading_environment import TradingEnvironment
 from yahoo_fin_data import get_data
 from plotter import Plotter
 import os
-from timestamped_print import timestamped_print
+from print_options import DEBUG_PRINTING, timestamped_print
 
 
 def parse_args():
@@ -56,6 +56,12 @@ def parse_args():
         type=str,
         default="TQQQ",
         help='Ticker symbol for the stock data'
+    )
+    parser.add_argument(
+        '--debug_print',
+        action='store_true',  # This sets the flag to True if it is present.
+        default=False,
+        help='Show detailed debug print statements'
     )
     # Parse the arguments
     args = parser.parse_args()
@@ -102,7 +108,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
 
     # Get the input shape
     input_shape = data_collector.data_tensor.shape[1]
-
+    timestamped_print("data_collector.data_tensor.shape[1]", data_collector.data_tensor.shape[1])
     timestamped_print("input_shape (main)", input_shape)
 
     # Define the dimensions of the policy network
@@ -160,7 +166,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
     # Run the optimization
     res = minimize(
         problem,
-        algorithm, # this calls TradingProblem._evaluate which calls TradingEnvironment.simulate_trading
+        algorithm,  # this calls TradingProblem._evaluate which calls TradingEnvironment.simulate_trading
         ('n_gen', n_gen),
         callback=performance_logger,
         verbose=True,
@@ -223,7 +229,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker):
 
             timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
             validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
-        timestamped_print("torch.save(best_network")
+        timestamped_print("torch.save(best_network)")
         torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
 
         queue.put(validation_results)
@@ -249,6 +255,7 @@ if __name__ == '__main__':
     """
 
     args = parse_args()
+    print_options.DEBUG_PRINTING = args.debug_print
 
     # Access arguments like this
     timestamped_print(f"Population size: {args.pop_size}")
