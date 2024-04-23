@@ -92,10 +92,8 @@ class Plotter():
         fig_3d.canvas.draw()
         fig_2d.canvas.draw()
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        fig_3d.savefig(self._set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
-                                     f"{timestamp}_validation_3D.png"))
-        fig_2d.savefig(self._set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}",
-                                     f"{timestamp}_validation_2D.png"))
+        fig_3d.savefig(self._set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_3D.png"))
+        fig_2d.savefig(self._set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_2D.png"))
 
     def _update_training_plots(self, current_gen: int) -> None:
         """

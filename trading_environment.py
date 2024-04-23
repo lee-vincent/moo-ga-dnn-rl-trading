@@ -50,6 +50,11 @@ class TradingEnvironment:
         Simulates trading over the dataset.
         Updates max_profit and drawdown.
         Returned values are used to evaluate the individual (multi-objective).
+        No fractional shares.  Buy as many shares as possible with the money available.
+        This might sound risky, but with hyper-conservative risk management (multiple stop loss variations and option protection) this is not a problem.
+        Backtesting engines allow you adjust the amount invested by percentage, number of shares, etc.
+        Buy and Sell signals should be executed at the next days opening price.
+
         """
 
         self.reset()
@@ -58,8 +63,7 @@ class TradingEnvironment:
         # Simulate trading over the dataset
         for i in range(len(self.features)):  # this is all the rows in  training_tqqq_prepared.csv
             feature_vector = self.features[i:i+1]  # Get the feature vector for the current day
-            feature_vector = feature_vector.to(torch.device(
-                "cuda" if torch.cuda.is_available() else "cpu"))
+            feature_vector = feature_vector.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
             local_decisions.append(decision)
             current_price = self.closing_prices.iloc[i]
@@ -81,6 +85,7 @@ class TradingEnvironment:
             drawdown_pct = (current_drawdown / self.max_balance) * 100
             self.drawdown = max(self.drawdown, drawdown_pct)
 
+        # If I still have stock on the last day, sell for cash!
         if self.shares_owned > 0:
             self.balance += self.shares_owned * self.closing_prices.iloc[-1]
             self.shares_owned = 0
