@@ -112,29 +112,21 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
     # Manipulate data and calculate stock measures
     prepared_data = DataCollector(data, training_end_date)
 
-    # Get the input shape
-    input_shape = prepared_data.data_tensor.shape[1]
-    timestamped_print("data_collector.data_tensor.shape[1]", prepared_data.data_tensor.shape[1])
-    timestamped_print("input_shape (main)", input_shape)
-
-    # Define the dimensions of the policy network
-    dimensions = [input_shape, 64, 32, 16, 8, 4, 3]
-
     # Create the policy network
-    network = PolicyNetwork(dimensions)
+    network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
 
-    # Check if multiple GPUs are available
-    timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
-    if torch.cuda.device_count() > 1:
-        timestamped_print(f"{torch.cuda.device_count()} GPUs available. Using DataParallel.")
-        # Use DataParallel to use multiple GPUs
-        network = DataParallel(network)
-    else:
-        timestamped_print("Using a single GPU because you have a sad compute env.")
-
-    # Move the model to GPU if available
     timestamped_print(f"CUDA available? {torch.cuda.is_available()}")
 
+    # Check if multiple GPUs are available
+    if torch.cuda.device_count() > 1:
+        timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
+        network = DataParallel(network)  # Use DataParallel to use multiple GPUs
+    elif torch.cuda.device_count() == 1:
+        timestamped_print("Using a single GPU.")
+    else:
+        timestamped_print("No GPUs available. Using CPU.")
+
+    # Move the model to GPU if available
     network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     # Create the trading environment
@@ -144,18 +136,16 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
         network,
         prepared_data.training_prices)
 
-    # initialize the thread pool and create the runner
-    # for ElementwiseProblem parallelization
+    # initialize the thread pool and create the runner for ElementwiseProblem parallelization
     n_threads = os.cpu_count()
-    timestamped_print("pool = mp.pool.ThreadPool(n_threads)")
     pool = mp.pool.ThreadPool(n_threads)
-    timestamped_print("runner = StarmapParallelization(pool.starmap)")
     runner = StarmapParallelization(pool.starmap)
 
     timestamped_print("Create the trading problem")
     # Create the trading problem
     problem = TradingProblem(prepared_data.training_tensor, network,
                              trading_env, elementwise_runner=runner)
+
     timestamped_print("Create the algorithm")
     # Create the algorithm
     algorithm = NSGA2(
@@ -165,6 +155,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
         mutation=PM(prob=0.2, eta=20),
         eliminate_duplicates=True
     )
+
     timestamped_print("performance_logger = PerformanceLogger(queue)")
     performance_logger = PerformanceLogger(queue)
 
@@ -179,14 +170,12 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
         save_history=True
     )
 
-    timestamped_print("after Run the optimization")
+    timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
     history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
-
     generations = history["generation"].values
     objectives = history["objectives"].values
-    # VL: flake8 is complaining that decisions is never accessed, so why is it defined here?
     decisions = history["decision_variables"].values
     timestamped_print("decisions", decisions)
     best = history["best"].values
