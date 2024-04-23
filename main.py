@@ -11,15 +11,16 @@ from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.optimize import minimize
 import multiprocessing as mp
 from pymoo.core.problem import StarmapParallelization
-from data_preparation import DataCollector
+# from data_preparation import DataCollector
+from prepare_data import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
-from yahoo_fin_data import get_data
 from plotter import Plotter
 import os
 from timestamped_print import timestamped_print
 from model_dates import ModelDates
+from fetch_data import fetch_data
 
 
 def parse_args():
@@ -101,18 +102,18 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
+# def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
+def train_and_validate(queue, n_pop, n_gen, stock_df, profit_threshold, drawdown_threshold):
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
     # VL: ticker should be an arg passed to main.py
-    stock_df = get_data(ticker)
-    data_collector = DataCollector(data_df=stock_df)
+    # stock_df = get_data(ticker)
+    # data_collector = DataCollector(data_df=stock_df)
+    data_collector = DataCollector(data, model_dates.training_end_date)
 
-    # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
-    # VL: why are they choosing to drop this in the data_collector module and not in the yahoo_fin_data module like they did with ticker??
-    data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
+    # data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
 
     # Get the input shape
     input_shape = data_collector.data_tensor.shape[1]
@@ -278,11 +279,13 @@ if __name__ == '__main__':
     timestamped_print(f"Testing End Date: {model_dates.testing_end_date}")
     timestamped_print(f"Save Data: {args.save_data}")
 
+    # stock_df = get_data(args.ticker)
+    data = fetch_data(args.ticker, model_dates.training_start_date, model_dates.testing_end_date, args.save_data)
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
 
     timestamped_print("train_and_validate_process = mp.Process.")
-    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, args.pop_size, args.n_gen, args.ticker, args.profit_threshold, args.drawdown_threshold))
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, args.pop_size, args.n_gen, data, args.profit_threshold, args.drawdown_threshold))
 
     timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()
