@@ -71,6 +71,12 @@ def parse_args():
         default=False,
         help='Save the raw dataset to csv: open, high, low, close, adjclose, volume'
     )
+    parser.add_argument(
+        '--force_cpu',
+        action='store_true',  # This sets the flag to True if it is present.
+        default=False,
+        help='Force training to run on CPU even if a GPU is available'
+    )
 
     # Parse the arguments
     args = parser.parse_args()
@@ -95,7 +101,7 @@ def map_params_to_model(model, params):
 
 
 # def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
-def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data):
+def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data, force_cpu):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -110,25 +116,28 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
 
     timestamped_print(f"CUDA available? {torch.cuda.is_available()}")
 
-    # # Check if multiple GPUs are available
-    # if torch.cuda.device_count() > 1:
-    #     timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
-    #     network = DataParallel(network)  # Use DataParallel to use multiple GPUs
-    # elif torch.cuda.device_count() == 1:
-    #     timestamped_print("Using a single GPU.")
-    # else:
-    #     timestamped_print("No GPUs available. Using CPU.")
-
-    # Move the model to GPU if available
-    # network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
-    network.to(torch.device("cpu"))
+    # Check if multiple GPUs are available
+    if force_cpu:
+        timestamped_print("Force CPU.")
+        network.to(torch.device("cpu"))
+    elif torch.cuda.device_count() > 1:
+        timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
+        network = DataParallel(network)  # Use DataParallel to use multiple GPUs
+        network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    elif torch.cuda.device_count() == 1:
+        timestamped_print("Using a single GPU.")
+        network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    else:
+        timestamped_print("No GPUs available. Using CPU.")
+        network.to(torch.device("cpu"))
 
     # Create the trading environment
     timestamped_print("creating trading environment")
     trading_env = TradingEnvironment(
         prepared_data.training_tensor,
         network,
-        prepared_data.training_prices)
+        prepared_data.training_prices,
+        force_cpu)
 
     # initialize the thread pool and create the runner for ElementwiseProblem parallelization
     n_threads = os.cpu_count()
@@ -258,6 +267,7 @@ if __name__ == '__main__':
     timestamped_print(f"Testing Start Date: {model_dates.testing_start_date}")
     timestamped_print(f"Testing End Date: {model_dates.testing_end_date}")
     timestamped_print(f"Save Data: {args.save_data}")
+    timestamped_print(f"Force CPU: {args.force_cpu}")
 
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
@@ -272,7 +282,8 @@ if __name__ == '__main__':
                                                                              model_dates.training_start_date,
                                                                              model_dates.training_end_date,
                                                                              model_dates.testing_end_date,
-                                                                             args.save_data))
+                                                                             args.save_data,
+                                                                             args.force_cpu))
 
     timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()

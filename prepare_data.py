@@ -30,18 +30,18 @@ class DataCollector:
         columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume"]
         # Prepare and calculate data
         self._clean_data()
-        print("DataCollector._clean_data():", self.df)
+        # print("DataCollector._clean_data():", self.df)
         self._calculate_stock_measures()
-        print("DataCollector._calculate_stock_measures():", self.df)
+        # print("DataCollector._calculate_stock_measures():", self.df)
         self.df.drop(columns_to_drop_before_normalization, axis=1, inplace=True)
         self._normalize_data()
-        print("DataCollector._normalize_data():", self.df)
+        # print("DataCollector._normalize_data():", self.df)
         self._backfill_data()
-        print("DataCollector._backfill_data():", self.df)
+        # print("DataCollector._backfill_data():", self.df)
         # Drop unwanted columns
         self.df.drop(columns_to_drop_after_backfill, axis=1, inplace=True)
-        print("DataCollector.drop():", self.df)
-        self.df.to_csv("prepared_data.csv", index=False)
+        # print("DataCollector.drop():", self.df)
+        # self.df.to_csv("prepared_data.csv", index=False)
         # Split data into training and testing sets
         self._partition_data(training_end_date)
 
@@ -191,21 +191,21 @@ class DataCollector:
         """
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.df.values, dtype=torch.float32)
-        tensor_df = pd.DataFrame(self.data_tensor)
-        tensor_df.to_csv("tensor_df.csv", index=False)
+        # tensor_df = pd.DataFrame(self.data_tensor)
+        # tensor_df.to_csv("tensor_df.csv", index=False)
 
         self.training_tensor = torch.tensor(self.df.loc[:split_index].values, dtype=torch.float32)
-        print("self.training_tensor:", self.training_tensor)
-        training_tensor_df = pd.DataFrame(self.training_tensor)
-        training_tensor_df.to_csv("training_tensor.csv", index=False)
+        # print("self.training_tensor:", self.training_tensor)
+        # training_tensor_df = pd.DataFrame(self.training_tensor)
+        # training_tensor_df.to_csv("training_tensor.csv", index=False)
 
         self.testing_tensor = torch.tensor(self.df.loc[split_index:].values, dtype=torch.float32)
-        print("self.testing_tensor:", self.testing_tensor)
-        testing_tensor_df = pd.DataFrame(self.testing_tensor)
-        testing_tensor_df.to_csv("testing_tensor_df.csv", index=False)
+        # print("self.testing_tensor:", self.testing_tensor)
+        # testing_tensor_df = pd.DataFrame(self.testing_tensor)
+        # testing_tensor_df.to_csv("testing_tensor_df.csv", index=False)
 
         if self.closing_prices is not None:
             self.training_prices = self.closing_prices.loc[:split_index]
-            print("self.training_prices:", self.training_prices)
+            # print("self.training_prices:", self.training_prices)
             self.testing_prices = self.closing_prices.loc[split_index:]
-            print("self.testing_prices:", self.testing_prices)
+            # print("self.testing_prices:", self.testing_prices)
