@@ -258,7 +258,6 @@ if __name__ == '__main__':
     timestamped_print(f"Testing End Date: {model_dates.testing_end_date}")
     timestamped_print(f"Save Data: {args.save_data}")
 
-    # stock_df = get_data(args.ticker)
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
 
