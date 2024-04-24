@@ -222,7 +222,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
-            if ratio > max_ratio and drawdown < 55.0:
+            if ratio > max_ratio and profit > profit_threshold and drawdown < drawdown_threshold:
                 best = ratio
                 best_network = network.state_dict()
 
