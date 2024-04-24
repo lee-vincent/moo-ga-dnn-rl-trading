@@ -214,7 +214,13 @@ python3 -u main.py --n_gen $N_GEN --ticker $TICKER > "${INSTANCE_NAME}_${INSTANC
 tail -f "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt"
 
 ```
-
+r7iz.xlarge	    1:34:55
+r7iz.4xlarge 	1:32:04	
+c7a.xlarge 	    1:47:13
+c7i.xlarge	    1:33:11
+m5zn.xlarge	    dnf
+m5zn.metal	    dnf
+z1d.xlarge	    dnf
 ```bash
 ubuntu@ip-172-31-43-83:~/repos/RL-Trading$ python ./main.py 
 Population size: 100
