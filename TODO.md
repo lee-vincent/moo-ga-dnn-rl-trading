@@ -95,11 +95,8 @@ kernel: 6.2.0-26
 GCC 11.4.0
 ```bash
 ssh -i ~/.ssh/bastion ubuntu@35.174.208.26
-
 sudo apt update && sudo apt upgrade -y
-sudo apt install gcc -y
-sudo apt install python3-pip -y
-sudo apt-get install python-is-python3 libgl1 -y
+sudo apt install gcc python3-pip libgl1 python-is-python3 -y
 sudo reboot -f # because of kernel update message
 # uname -r # 6.5.0-1017-aws
 # python3 --version # Python 3.10.12

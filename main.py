@@ -110,17 +110,18 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
 
     timestamped_print(f"CUDA available? {torch.cuda.is_available()}")
 
-    # Check if multiple GPUs are available
-    if torch.cuda.device_count() > 1:
-        timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
-        network = DataParallel(network)  # Use DataParallel to use multiple GPUs
-    elif torch.cuda.device_count() == 1:
-        timestamped_print("Using a single GPU.")
-    else:
-        timestamped_print("No GPUs available. Using CPU.")
+    # # Check if multiple GPUs are available
+    # if torch.cuda.device_count() > 1:
+    #     timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
+    #     network = DataParallel(network)  # Use DataParallel to use multiple GPUs
+    # elif torch.cuda.device_count() == 1:
+    #     timestamped_print("Using a single GPU.")
+    # else:
+    #     timestamped_print("No GPUs available. Using CPU.")
 
     # Move the model to GPU if available
-    network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    # network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    network.to(torch.device("cpu"))
 
     # Create the trading environment
     timestamped_print("creating trading environment")
