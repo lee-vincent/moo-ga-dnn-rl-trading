@@ -210,7 +210,7 @@ INSTANCE_TYPE=$(TOKEN=`curl -sX PUT "http://169.254.169.254/latest/api/token" -H
 N_GEN=500
 TICKER="tqqq"
 JOB_START_TIME="$(TZ='America/New_York' date +'%m-%d-%Y_%I%M%p')"
-python3 -u main.py --n_gen $N_GEN --ticker $TICKER > "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt" 2>&1 &
+nohup python3 -u main.py --n_gen $N_GEN --ticker $TICKER > "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt" 2>&1 &
 tail -f "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt"
 
 ```
