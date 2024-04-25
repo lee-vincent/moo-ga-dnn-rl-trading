@@ -207,7 +207,7 @@ export PATH=/home/ubuntu/.local/bin${PATH:+:${PATH}}
 pip3 install -r requirements.txt
 INSTANCE_NAME=$(TOKEN=`curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -sH "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/Name)
 INSTANCE_TYPE=$(TOKEN=`curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -sH "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-type)
-N_GEN=300
+N_GEN=500
 TICKER="tqqq"
 JOB_START_TIME="$(TZ='America/New_York' date +'%m-%d-%Y_%I%M%p')"
 python3 -u main.py --n_gen $N_GEN --ticker $TICKER > "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt" 2>&1 &
