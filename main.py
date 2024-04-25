@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+import datetime
 import torch
 import pandas as pd
 from torch.nn import DataParallel
@@ -10,12 +11,16 @@ from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.optimize import minimize
 import multiprocessing as mp
 from pymoo.core.problem import StarmapParallelization
-from data_preparation import DataCollector
+from prepare_data import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
-from yahoo_fin_data import get_data
 from plotter import Plotter
+import os
+from timestamped_print import timestamped_print
+from model_dates import ModelDates
+from fetch_data import fetch_data
+from set_path import set_path
 
 
 def parse_args():
@@ -55,18 +60,28 @@ def parse_args():
         default="TQQQ",
         help='Ticker symbol for the stock data'
     )
+    parser.add_argument(
+        '--training_start_date',
+        type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'),
+        default=datetime.datetime(2011, 1, 1),
+        help='The date in the past the model will be trained from in YYYY-MM-DD format')
+    parser.add_argument(
+        '--save_data',
+        action='store_true',  # This sets the flag to True if it is present.
+        default=False,
+        help='Save the raw dataset to csv: open, high, low, close, adjclose, volume'
+    )
+    parser.add_argument(
+        '--force_cpu',
+        action='store_true',  # This sets the flag to True if it is present.
+        default=False,
+        help='Force training to run on CPU even if a GPU is available'
+    )
+
     # Parse the arguments
     args = parser.parse_args()
 
     return args
-
-
-def set_path(script_path: Path, dir_path: str, file_path: str) -> Path:
-    """Set output path."""
-    output_dir = script_path / Path(dir_path)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    new_path = output_dir / file_path
-    return new_path
 
 
 def map_params_to_model(model, params):
@@ -85,60 +100,56 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
+# def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
+def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data, force_cpu):
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Get and load data
-    # VL: ticker should be an arg passed to main.py
-    stock_df = get_data(ticker)
-    data_collector = DataCollector(data_df=stock_df)
+    data = fetch_data(ticker, training_start_date, testing_end_date, save_data)
 
-    # Prepare and calculate the data, columns_to_drop listed just to highlight where that ability is
-    # VL: why are they choosing to drop this in the data_collector module and not in the yahoo_fin_data module like they did with ticker??
-    data_collector.prepare_and_calculate_data(columns_to_drop=['close'])
-
-    # Get the input shape
-    input_shape = data_collector.data_tensor.shape[1]
-
-    print("input_shape (main)", input_shape)
-
-    # Define the dimensions of the policy network
-    dimensions = [input_shape, 64, 32, 16, 8, 4, 3]
+    # Manipulate data and calculate stock measures
+    prepared_data = DataCollector(data, training_end_date)
 
     # Create the policy network
-    network = PolicyNetwork(dimensions)
+    network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
+
+    timestamped_print(f"CUDA available? {torch.cuda.is_available()}")
 
     # Check if multiple GPUs are available
-    print(f"{torch.cuda.device_count()} GPUs available.")
-    if torch.cuda.device_count() > 1:
-        print(f"{torch.cuda.device_count()} GPUs available. Using DataParallel.")
-        # Use DataParallel to use multiple GPUs
-        network = DataParallel(network)
+    if force_cpu:
+        timestamped_print("Force CPU.")
+        network.to(torch.device("cpu"))
+    elif torch.cuda.device_count() > 1:
+        timestamped_print(f"{torch.cuda.device_count()} GPUs available.")
+        network = DataParallel(network)  # Use DataParallel to use multiple GPUs
+        network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    elif torch.cuda.device_count() == 1:
+        timestamped_print("Using a single GPU.")
+        network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
     else:
-        print("Using a single GPU because you have a sad compute env.")
-
-    # Move the model to GPU if available
-    print(f"CUDA available? {torch.cuda.is_available()}")
-
-    network.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+        timestamped_print("No GPUs available. Using CPU.")
+        network.to(torch.device("cpu"))
 
     # Create the trading environment
+    timestamped_print("creating trading environment")
     trading_env = TradingEnvironment(
-        data_collector.training_tensor,
+        prepared_data.training_tensor,
         network,
-        data_collector.training_prices)
+        prepared_data.training_prices,
+        force_cpu)
 
-    # initialize the thread pool and create the runner
-    # for ElementwiseProblem parallelization
-    n_threads = 4
+    # initialize the thread pool and create the runner for ElementwiseProblem parallelization
+    n_threads = os.cpu_count()
     pool = mp.pool.ThreadPool(n_threads)
     runner = StarmapParallelization(pool.starmap)
 
+    timestamped_print("Create the trading problem")
     # Create the trading problem
-    problem = TradingProblem(data_collector.training_tensor, network,
+    problem = TradingProblem(prepared_data.training_tensor, network,
                              trading_env, elementwise_runner=runner)
 
+    timestamped_print("Create the algorithm")
     # Create the algorithm
     algorithm = NSGA2(
         pop_size=n_pop,
@@ -148,25 +159,28 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
         eliminate_duplicates=True
     )
 
+    timestamped_print("performance_logger = PerformanceLogger(queue)")
     performance_logger = PerformanceLogger(queue)
 
+    timestamped_print("Run the optimization")
     # Run the optimization
     res = minimize(
         problem,
-        algorithm,
+        algorithm,  # this calls TradingProblem._evaluate which calls TradingEnvironment.simulate_trading
         ('n_gen', n_gen),
         callback=performance_logger,
         verbose=True,
         save_history=True
     )
+
+    timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
     history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
-
     generations = history["generation"].values
     objectives = history["objectives"].values
-    # VL: flake8 is complaining that decisions is never accessed, so why is it defined here?
     decisions = history["decision_variables"].values
+    timestamped_print("decisions", decisions)
     best = history["best"].values
 
     historia = []
@@ -190,8 +204,8 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
     )
     history_df.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}_avg.csv"))
 
-    trading_env.set_features(data_collector.testing_tensor)
-    trading_env.set_closing_prices(data_collector.testing_prices)
+    trading_env.set_features(prepared_data.testing_tensor)
+    trading_env.set_closing_prices(prepared_data.testing_prices)
     population = None if res.pop is None else res.pop.get("X")
 
     validation_results = []
@@ -204,6 +218,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
             # VL: why did previous team comment this out?
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
+            timestamped_print("trading_env.simulate_trading")
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
@@ -211,9 +226,9 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
                 best = ratio
                 best_network = network.state_dict()
 
-            print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
+            timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
             validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
-
+        timestamped_print("torch.save(best_network)")
         torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
 
         queue.put(validation_results)
@@ -240,30 +255,49 @@ if __name__ == '__main__':
 
     args = parse_args()
 
-    # Access arguments like this
-    print(f"Population size: {args.pop_size}")
-    print(f"Number of generations: {args.n_gen}")
-    print(f"Profit threshold: {args.profit_threshold}")
-    print(f"Drawdown threshold: {args.drawdown_threshold}")
-    print(f"Ticker symbol: {args.ticker}")
+    model_dates = ModelDates(args.training_start_date)
 
-    # NSGA-II parameters
-    n_pop = args.pop_size
-    n_gen = args.n_gen
-    profit_threshold = args.profit_threshold
-    drawdown_threshold = args.drawdown_threshold
-    ticker = args.ticker
+    timestamped_print(f"Population size: {args.pop_size}")
+    timestamped_print(f"Number of generations: {args.n_gen}")
+    timestamped_print(f"Profit threshold: {args.profit_threshold}")
+    timestamped_print(f"Drawdown threshold: {args.drawdown_threshold}")
+    timestamped_print(f"Ticker symbol: {args.ticker}")
+    timestamped_print(f"Training Start Date: {model_dates.training_start_date}")
+    timestamped_print(f"Training End Date: {model_dates.training_end_date}")
+    timestamped_print(f"Testing Start Date: {model_dates.testing_start_date}")
+    timestamped_print(f"Testing End Date: {model_dates.testing_end_date}")
+    timestamped_print(f"Save Data: {args.save_data}")
+    timestamped_print(f"Force CPU: {args.force_cpu}")
 
-    # Start training and validation in new process, create visualizations with data from queue
-    # VL: mp.set_start_method('fork')  is this going to be needed?
-    # VL: https://docs.python.org/3.10/library/multiprocessing.html#multiprocessing.set_start_method
     queue = mp.Queue()
-    plotter = Plotter(queue, n_gen)
-    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold))
+    plotter = Plotter(queue, args.n_gen)
+
+    timestamped_print("train_and_validate_process = mp.Process.")
+    train_and_validate_process = mp.Process(target=train_and_validate, args=(queue,
+                                                                             args.pop_size,
+                                                                             args.n_gen,
+                                                                             args.ticker,
+                                                                             args.profit_threshold,
+                                                                             args.drawdown_threshold,
+                                                                             model_dates.training_start_date,
+                                                                             model_dates.training_end_date,
+                                                                             model_dates.testing_end_date,
+                                                                             args.save_data,
+                                                                             args.force_cpu))
+
+    timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()
+
+    timestamped_print("plotter.update_while_training()")
     plotter.update_while_training()
+
+    timestamped_print("train_and_validate_process.join()")
     train_and_validate_process.join()
+
+    timestamped_print("train_and_validate_process.close()")
     train_and_validate_process.close()
+
+    timestamped_print("queue.close()")
     queue.close()
 
-    print("Training and validation process finished.")
+    timestamped_print("Training and validation process finished.")

@@ -10,6 +10,27 @@
 ## Michelle
 
 ## Vinnie
+it is possible to compile pymoo modules: https://pymoo.org/installation.html
+try a v100 on ubuntu python3.10, try compiling 3.12 on ubuntu, then try lowering code base to python 3.8 for running on rabbit
+drop un-needed columns OHLV - and change close to adjclose
+Current Data Date Ranges
+stock data range        2011-01-01 -> 2023-12-31
+training_tensor range   2011-01-01 -> 2022-01-01
+testing_tensor range    2022-01-02 -> 2023-12-31
+
+Proposed Data Date Ranges
+stock data range        2011-01-01 -> DATE_PREVIOUS_MARKET_CLOSE
+calculating DATE_PREVIOUS_MARKET_CLOSE:
+DAYS_STOCK_MARKET_OPEN=[Monday,Tuesday,...,Friday]
+TODAY is Monday 4-22-2024 
+if TODAY in DAYS_STOCK_MARKET_OPEN
+then DATE_PREVIOUS_MARKET_CLOSE = (TODAY - 1) = Friday 4-19-2024
+training_tensor range     2011-01-01 - 2022-01-01
+testing_tensor range    2022-01-02 - DATE_PREVIOUS_MARKET_CLOSE
+DAY_TO_RUN_INFERENCE_ON = TODAY
+
+always test on the last 365 days, and everything before going back to 2011 is training
+
 spent time re-writing the yahoo_fin_data module to be ticker agnostic
 mention all of the libraries/modules in main.py that we all had to learn about
 spending significant time figuring out how to install python 3.12.3 on amazon linux 2
@@ -74,13 +95,10 @@ kernel: 6.2.0-26
 GCC 11.4.0
 ```bash
 ssh -i ~/.ssh/bastion ubuntu@35.174.208.26
-
 sudo apt update && sudo apt upgrade -y
-sudo apt install gcc -y
-sudo apt install python3-pip -y
-sudo apt-get install python-is-python3 libgl1 -y
+sudo apt install gcc python3-pip libgl1 python-is-python3 -y
 sudo reboot -f # because of kernel update message
-# uname -r # 6.5.0-1017-aws
+# uname -r # 6.5.0-101x-aws
 # python3 --version # Python 3.10.12
 # pip3 --version # pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
 # Download CUDA Toolkit 12.4 Update 1 Installer for Linux Ubuntu 22.04 x86_64
@@ -176,15 +194,33 @@ make
 # Result = PASS
 
 # NOTE: The CUDA Samples are not meant for performance measurements. Results may vary when GPU Boost is enabled.
+git config --global user.name "Vincent Lee"
+git config --global user.email vinnie@vinnielee.io
+git config --global pull.rebase false
+git config --global credential.helper store
+mkdir ~/repos
 cd ~/repos/
 git clone https://github.com/chesterornes/RL-Trading.git
 cd ./RL-Trading/
 git checkout lee-dev
 export PATH=/home/ubuntu/.local/bin${PATH:+:${PATH}}
-pip3 install -r requirements.txt 
-python ./main.py
-```
+pip3 install -r requirements.txt
+INSTANCE_NAME=$(TOKEN=`curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -sH "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/Name)
+INSTANCE_TYPE=$(TOKEN=`curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -sH "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-type)
+N_GEN=300
+TICKER="tqqq"
+JOB_START_TIME="$(TZ='America/New_York' date +'%m-%d-%Y_%I%M%p')"
+python3 -u main.py --n_gen $N_GEN --ticker $TICKER > "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt" 2>&1 &
+tail -f "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt"
 
+```
+r7iz.xlarge	    1:34:55
+r7iz.4xlarge 	1:32:04	
+c7a.xlarge 	    1:47:13
+c7i.xlarge	    1:33:11
+m5zn.xlarge	    dnf
+m5zn.metal	    dnf
+z1d.xlarge	    dnf
 ```bash
 ubuntu@ip-172-31-43-83:~/repos/RL-Trading$ python ./main.py 
 Population size: 100
