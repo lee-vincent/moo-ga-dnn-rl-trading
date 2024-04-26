@@ -1,0 +1,37 @@
+nohup: ignoring input
+2024-04-25 18:18:26:  Population size: 100
+2024-04-25 18:18:26:  Number of generations: 500
+2024-04-25 18:18:26:  Profit threshold: 100.0
+2024-04-25 18:18:26:  Drawdown threshold: 40.0
+2024-04-25 18:18:26:  Ticker symbol: tqqq
+2024-04-25 18:18:26:  Training Start Date: 2011-01-01
+2024-04-25 18:18:26:  Training End Date: 2022-04-26
+2024-04-25 18:18:26:  Testing Start Date: 2022-04-27
+2024-04-25 18:18:26:  Testing End Date: 2024-04-25
+2024-04-25 18:18:26:  Save Data: False
+2024-04-25 18:18:26:  Force CPU: False
+2024-04-25 18:18:26:  train_and_validate_process = mp.Process.
+2024-04-25 18:18:26:  train_and_validate_process.start()
+2024-04-25 18:18:26:  plotter.update_while_training()
+
+Continuing without tkinter backend...
+
+Process Process-1:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/repos/RL-Trading/main.py", line 112, in train_and_validate
+    prepared_data = DataCollector(data, training_end_date)
+  File "/home/ubuntu/repos/RL-Trading/prepare_data.py", line 42, in __init__
+    self.df.drop(columns_to_drop_after_backfill, axis=1, inplace=True)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/pandas/core/frame.py", line 5568, in drop
+    return super().drop(
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/pandas/core/generic.py", line 4785, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/pandas/core/generic.py", line 4827, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/pandas/core/indexes/base.py", line 7070, in drop
+    raise KeyError(f"{labels[mask].tolist()} not found in axis")
+KeyError: "['ajclose'] not found in axis"

@@ -27,7 +27,7 @@ class DataCollector:
         self.testing_prices = None
         # Unwanted columns
         columns_to_drop_before_normalization = ["ticker"]
-        columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume"]
+        columns_to_drop_after_backfill = ["open", "high", "low", "adjclose", "volume"]
         # Prepare and calculate data
         self._clean_data()
         # print("DataCollector._clean_data():", self.df)
