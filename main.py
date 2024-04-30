@@ -151,10 +151,16 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
 
     timestamped_print("Create the algorithm")
     # Create the algorithm
+    # :param eta: Crowding degree of the mutation. A high eta will produce
+    #             a mutant resembling its parent, while a small eta will
+    #             produce a solution much more different.
     algorithm = NSGA2(
         pop_size=n_pop,
         sampling=FloatRandomSampling(),
         crossover=SBX(prob=0.9, eta=15),
+        # :param eta: Crowding degree of the mutation. A high eta will
+        # produce a mutant resembling its parent, while a small eta will
+        # produce a very different solution.
         mutation=PM(prob=0.2, eta=20),
         eliminate_duplicates=True
     )
