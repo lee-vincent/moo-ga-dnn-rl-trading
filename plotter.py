@@ -9,7 +9,7 @@ from set_path import set_path
 
 
 class Plotter():
-    def __init__(self, queue: object, n_gen: int):
+    def __init__(self, queue: object, n_gen: int, start_time: int):
         self.queue = queue  # For IPC
         self.max_gen = n_gen  # Num of gens to run NSGA-II for
         self.cmap = matplotlib.cm.viridis_r  # Colormap
@@ -19,6 +19,7 @@ class Plotter():
         self.previous_frontier = None  # Previous frontier scatter
         self.training_figs_axs = []  # Collection of plots to update while training/validating
         self.script_path = Path(__file__).parent  # Path script is run from
+        self.start_time = start_time  # start time
 
     def _create_fig_ax(self, title: str, dimensions: int = 2, xlabel: str = "Profit",
                        ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True,
@@ -189,6 +190,7 @@ class Plotter():
                                      for x, y, z, *r in validation_results])
         self._create_validation_plots(x_data, y_data, z_data)
 
+        print('\nruntime:', round(time.time() - self.start_time), 'seconds')
         print("\nClose figures to continue...\n")
         plt.show(block=True)
         plt.ioff()
