@@ -21,6 +21,7 @@ from timestamped_print import timestamped_print
 from model_dates import ModelDates
 from fetch_data import fetch_data
 from set_path import set_path
+import sys
 
 
 def parse_args():
@@ -101,12 +102,9 @@ def map_params_to_model(model, params):
 
 
 # def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
-def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data, force_cpu):
+def train_and_validate(queue, n_pop, n_gen, data, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data, force_cpu):
 
     SCRIPT_PATH = Path(__file__).parent
-
-    # Get and load data
-    data = fetch_data(ticker, training_start_date, testing_end_date, save_data)
 
     # Manipulate data and calculate stock measures
     prepared_data = DataCollector(data, training_end_date)
@@ -269,6 +267,12 @@ if __name__ == '__main__':
     timestamped_print(f"Save Data: {args.save_data}")
     timestamped_print(f"Force CPU: {args.force_cpu}")
 
+    # Get stock data from yahoo_fin
+    stock_data = fetch_data(args.ticker, model_dates.training_start_date, model_dates.training_end_date, args.save_data)
+    if stock_data is None:
+        # yahoo_fin could not find data. Exit program
+        sys.exit(1)
+
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
 
@@ -276,7 +280,7 @@ if __name__ == '__main__':
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue,
                                                                              args.pop_size,
                                                                              args.n_gen,
-                                                                             args.ticker,
+                                                                             stock_data,
                                                                              args.profit_threshold,
                                                                              args.drawdown_threshold,
                                                                              model_dates.training_start_date,
@@ -301,3 +305,4 @@ if __name__ == '__main__':
     queue.close()
 
     timestamped_print("Training and validation process finished.")
+
