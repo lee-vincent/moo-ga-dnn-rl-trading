@@ -151,16 +151,10 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
 
     timestamped_print("Create the algorithm")
     # Create the algorithm
-    # :param eta: Crowding degree of the mutation. A high eta will produce
-    #             a mutant resembling its parent, while a small eta will
-    #             produce a solution much more different.
     algorithm = NSGA2(
         pop_size=n_pop,
         sampling=FloatRandomSampling(),
         crossover=SBX(prob=0.9, eta=15),
-        # :param eta: Crowding degree of the mutation. A high eta will
-        # produce a mutant resembling its parent, while a small eta will
-        # produce a very different solution.
         mutation=PM(prob=0.2, eta=20),
         eliminate_duplicates=True
     )
@@ -210,6 +204,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
     )
     history_df.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}_avg.csv"))
 
+    # below is where test/validation happens - we should already have the pareto set from above.
     trading_env.set_features(prepared_data.testing_tensor)
     trading_env.set_closing_prices(prepared_data.testing_prices)
     population = None if res.pop is None else res.pop.get("X")
