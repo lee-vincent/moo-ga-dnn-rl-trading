@@ -68,7 +68,7 @@ class Plotter():
         self.training_figs_axs.append(self._create_fig_ax(
             title="Population Outcomes"))
         self.training_figs_axs.append(
-            self._create_fig_ax(title="Current Pareto Front (Gen 0)", dimensions=3))
+            self._create_fig_ax(title="Current Pareto Front (Gen 0)"))
         self.previous_frontier = self.training_figs_axs[2][1].scatter(
             [], [])  # For removal logic
 
