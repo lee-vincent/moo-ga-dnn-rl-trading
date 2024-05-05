@@ -63,6 +63,7 @@ class TradingEnvironment:
         local_decisions = []
 
         # Simulate trading over the dataset
+        print("self.features", self.features)
         for i in range(len(self.features)):  # this is all the rows in  training_tqqq_prepared.csv
             feature_vector = self.features[i:i+1]  # Get the feature vector for the current day
             if self.force_cpu:
