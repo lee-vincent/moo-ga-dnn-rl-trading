@@ -14,6 +14,7 @@ class DataCollector:
         # Input data
         self.df = df
         self.closing_prices = None
+        self.opening_prices = None
         # Window size and time shift in days, used for calculations
         self.windows = [16, 32, 64]
         self.time_shifts = [2, 4, 6, 8, 10]
@@ -27,7 +28,8 @@ class DataCollector:
         self.testing_prices = None
         # Unwanted columns
         columns_to_drop_before_normalization = ["ticker"]
-        columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume"]
+        # columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume"]
+        columns_to_drop_after_backfill = ["high", "low", "close", "volume"]
         # Prepare and calculate data
         self._clean_data()
         # print("DataCollector._clean_data():", self.df)
@@ -60,6 +62,7 @@ class DataCollector:
         # Removes rows where all values are missing or just the timestamp is missing
         self.df = self.df.drop(rows_to_drop.index)
         self.closing_prices = self.df["adjclose"]
+        self.opening_prices = self.df["open"]
 
     def _calculate_stock_measures(self):
         """
@@ -209,3 +212,9 @@ class DataCollector:
             # print("self.training_prices:", self.training_prices)
             self.testing_prices = self.closing_prices.loc[split_index:]
             # print("self.testing_prices:", self.testing_prices)
+
+        if self.opening_prices is not None:
+            self.training_prices = self.opening_prices
+            # print("opening self.training_prices:", self.training_prices)
+            self.testing_prices = self.opening_prices.loc[split_index:]
+            # print("opening self.testing_prices:", self.testing_prices)

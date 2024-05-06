@@ -9,10 +9,10 @@ class TradingEnvironment:
     Profit and drawdown are calculated based on the trading decisions.
     """
 
-    def __init__(self, features, model, closing_prices, force_cpu):
+    def __init__(self, features, model, opening_prices, force_cpu):
         self.features = features  # The dataset
         self.model = model  # The model
-        self.closing_prices = closing_prices  # Closing prices
+        self.opening_prices = opening_prices  # Closing prices, updated to now opening prices
 
         self.force_cpu = force_cpu
 
@@ -44,6 +44,10 @@ class TradingEnvironment:
     def set_closing_prices(self, new_closing_prices):
         """Sets the closing prices."""
         self.closing_prices = new_closing_prices
+    
+    def set_opening_prices(self, new_opening_prices):
+        """Sets the closing prices."""
+        self.opening_prices = new_opening_prices
 
     def simulate_trading(self):
         """
@@ -63,7 +67,7 @@ class TradingEnvironment:
         local_decisions = []
 
         # Simulate trading over the dataset
-        for i in range(len(self.features)):  # this is all the rows in  training_tqqq_prepared.csv
+        for i in range(len(self.features)-1):  # this is all the rows in  training_tqqq_prepared.csv
             feature_vector = self.features[i:i+1]  # Get the feature vector for the current day
             if self.force_cpu:
                 feature_vector = feature_vector.to(torch.device("cpu"))
@@ -71,7 +75,7 @@ class TradingEnvironment:
                 feature_vector = feature_vector.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
             local_decisions.append(decision)
-            current_price = self.closing_prices.iloc[i]
+            current_price = self.opening_prices.iloc[i+1]
 
             if decision == 0 and self.balance >= current_price:  # Buy
                 shares_bought = self.balance // current_price
@@ -92,7 +96,7 @@ class TradingEnvironment:
 
         # If I still have stock on the last day, sell for cash!
         if self.shares_owned > 0:
-            self.balance += self.shares_owned * self.closing_prices.iloc[-1]
+            self.balance += self.shares_owned * self.opening_prices.iloc[-1]
             self.shares_owned = 0
             self.num_trades += 1
 
