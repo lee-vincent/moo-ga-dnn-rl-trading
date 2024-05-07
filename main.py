@@ -22,7 +22,6 @@ from model_dates import ModelDates
 from fetch_data import fetch_data
 from set_path import set_path
 import sys
-import time
 
 
 def parse_args():
@@ -252,8 +251,6 @@ if __name__ == '__main__':
     Can be run in a python notebook or as a standalone script.
     """
 
-    start_time = time.time()
-
     args = parse_args()
 
     model_dates = ModelDates(args.training_start_date)
@@ -277,7 +274,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     queue = mp.Queue()
-    plotter = Plotter(queue, args.n_gen, start_time)
+    plotter = Plotter(queue, args.n_gen)
 
     timestamped_print("train_and_validate_process = mp.Process.")
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue,
