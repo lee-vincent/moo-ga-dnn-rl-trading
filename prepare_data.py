@@ -109,9 +109,9 @@ class DataCollector:
         # Branch for window without time shift
         if time_shift == 0:
             close_series = self.df['adjclose']
-            hma_series = self._hull_moving_avg(close_series, window)
-            log_hma_series = pd.Series(np.log(hma_series), index=hma_series.index)
-            new_series = log_hma_series.diff()
+            log_close_series = pd.Series(np.log(close_series), index=close_series.index)
+            hma_series = self._hull_moving_avg(log_close_series, window)
+            new_series = hma_series.diff()
         # Branch if the data should be time_shifted
         else:
             new_series = pd.Series(self.df[f"velocity_{window}w_0ts"].shift(time_shift), index=self.df.index)
