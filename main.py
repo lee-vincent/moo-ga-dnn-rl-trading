@@ -180,7 +180,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
     generations = history["generation"].values
     objectives = history["objectives"].values
     decisions = history["decision_variables"].values
-    timestamped_print("decisions", decisions)
+    # timestamped_print("decisions", decisions)
     best = history["best"].values
 
     historia = []
@@ -219,7 +219,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
             # VL: why did previous team comment this out?
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
-            timestamped_print("trading_env.simulate_trading")
+            # timestamped_print("trading_env.simulate_trading")
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 

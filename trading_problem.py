@@ -43,8 +43,8 @@ class TradingProblem(ElementwiseProblem):
         The objectives are set to the profit and the negative drawdown.
         """
         self._decode_model(x)
-        print("type(x)", type(x))
-        print("x:", x)
+        # print("type(x)", type(x))
+        # print("x:", x)
         profit, drawdown, num_trades = self.environment.simulate_trading()
         out["F"] = np.array([-profit, drawdown, -num_trades])
 
