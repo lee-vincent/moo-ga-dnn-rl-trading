@@ -17,8 +17,7 @@ class TradingProblem(ElementwiseProblem):
     *** Still need to add 1 to n_vars for stop-loss gene ***
     """
 
-    def __init__(self, data: Tensor, network: DataParallel | PolicyNetwork, environment: TradingEnvironment, *args, **kwargs):
-        self.data = data
+    def __init__(self, network: DataParallel | PolicyNetwork, environment: TradingEnvironment, *args, **kwargs):
         self.network = network
         self.environment = environment
 

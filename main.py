@@ -144,8 +144,7 @@ def train_and_validate(queue, n_pop, n_gen, data, profit_threshold, drawdown_thr
 
     timestamped_print("Create the trading problem")
     # Create the trading problem
-    problem = TradingProblem(prepared_data.training_tensor, network,
-                             trading_env, elementwise_runner=runner)
+    problem = TradingProblem(network, trading_env, elementwise_runner=runner)
 
     timestamped_print("Create the algorithm")
     # Create the algorithm
