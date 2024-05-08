@@ -44,18 +44,6 @@ def parse_args():
         help='Number of generations for the genetic algorithm'
     )
     parser.add_argument(
-        '--profit_threshold',
-        type=float,
-        default=100.0,
-        help='Profit threshold for considering a model worth saving'
-    )
-    parser.add_argument(
-        '--drawdown_threshold',
-        type=float,
-        default=40.0,
-        help='Drawdown threshold for considering a model worth saving'
-    )
-    parser.add_argument(
         '--ticker',
         type=str,
         default="TQQQ",
@@ -101,8 +89,7 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-# def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
-def train_and_validate(queue, n_pop, n_gen, data, profit_threshold, drawdown_threshold, training_end_date, force_cpu):
+def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -216,7 +203,7 @@ def train_and_validate(queue, n_pop, n_gen, data, profit_threshold, drawdown_thr
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
-            if ratio > max_ratio and profit > profit_threshold and drawdown < drawdown_threshold:
+            if ratio > max_ratio:
                 best = ratio
                 best_network = network.state_dict()
 
@@ -253,8 +240,6 @@ if __name__ == '__main__':
 
     timestamped_print(f"Population size: {args.pop_size}")
     timestamped_print(f"Number of generations: {args.n_gen}")
-    timestamped_print(f"Profit threshold: {args.profit_threshold}")
-    timestamped_print(f"Drawdown threshold: {args.drawdown_threshold}")
     timestamped_print(f"Ticker symbol: {args.ticker}")
     timestamped_print(f"Training Start Date: {model_dates.training_start_date}")
     timestamped_print(f"Training End Date: {model_dates.training_end_date}")
@@ -277,8 +262,6 @@ if __name__ == '__main__':
                                                                              args.pop_size,
                                                                              args.n_gen,
                                                                              stock_data,
-                                                                             args.profit_threshold,
-                                                                             args.drawdown_threshold,
                                                                              model_dates.training_end_date,
                                                                              args.force_cpu))
 
