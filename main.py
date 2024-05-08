@@ -210,12 +210,9 @@ def train_and_validate(queue, n_pop, n_gen, data, profit_threshold, drawdown_thr
     best_network = None
     if population is not None:
         for i, x in enumerate(population):
-            # VL: does map_params_to_model really need to be its own function? hard to tell what's going on
             map_params_to_model(network, x)
-            # VL: why did previous team comment this out?
             # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
-            timestamped_print("trading_env.simulate_trading")
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
