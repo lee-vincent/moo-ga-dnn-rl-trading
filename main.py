@@ -102,7 +102,7 @@ def map_params_to_model(model, params):
 
 
 # def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
-def train_and_validate(queue, n_pop, n_gen, data, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data, force_cpu):
+def train_and_validate(queue, n_pop, n_gen, data, profit_threshold, drawdown_threshold, training_end_date, force_cpu):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -268,7 +268,7 @@ if __name__ == '__main__':
     timestamped_print(f"Force CPU: {args.force_cpu}")
 
     # Get stock data from yahoo_fin
-    stock_data = fetch_data(args.ticker, model_dates.training_start_date, model_dates.training_end_date, args.save_data)
+    stock_data = fetch_data(args.ticker, model_dates.training_start_date, model_dates.testing_end_date, args.save_data)
     if stock_data is None:
         # yahoo_fin could not find data. Exit program
         sys.exit(1)
@@ -283,10 +283,7 @@ if __name__ == '__main__':
                                                                              stock_data,
                                                                              args.profit_threshold,
                                                                              args.drawdown_threshold,
-                                                                             model_dates.training_start_date,
                                                                              model_dates.training_end_date,
-                                                                             model_dates.testing_end_date,
-                                                                             args.save_data,
                                                                              args.force_cpu))
 
     timestamped_print("train_and_validate_process.start()")
@@ -305,4 +302,3 @@ if __name__ == '__main__':
     queue.close()
 
     timestamped_print("Training and validation process finished.")
-
