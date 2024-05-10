@@ -228,7 +228,8 @@ def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
 
     # below is where test/validation happens - we should already have the pareto set from above.
     trading_env.set_features(prepared_data.testing_tensor)
-    trading_env.set_closing_prices(prepared_data.testing_prices)
+    # trading_env.set_closing_prices(prepared_data.testing_prices)
+    trading_env.set_opening_prices(prepared_data.testing_prices)
     population = None if res.pop is None else res.pop.get("X")
 
     validation_results = []
