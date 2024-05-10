@@ -160,7 +160,7 @@ def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
 
     # Pareto-optimal solutions obtained from the optimization procedure are given by
     F = res.F
-    print("len(F)", len(F)) # this is the number of pareto solutions found we should iterate over this
+    print("len(F)", len(F))  # this is the number of pareto solutions found we should iterate over this
     xl, xu = problem.bounds()
     plt.figure(figsize=(7, 5))
     plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
