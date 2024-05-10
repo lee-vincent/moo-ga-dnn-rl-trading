@@ -22,6 +22,7 @@ from model_dates import ModelDates
 from fetch_data import fetch_data
 from set_path import set_path
 import sys
+import matplotlib.pyplot as plt
 
 
 def parse_args():
@@ -157,14 +158,50 @@ def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
         save_history=True
     )
 
+    # Pareto-optimal solutions obtained from the optimization procedure are given by
+    F = res.F
+    print("len(F)", len(F)) # this is the number of pareto solutions found we should iterate over this
+    xl, xu = problem.bounds()
+    plt.figure(figsize=(7, 5))
+    plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+    plt.title("Raw Objective Space")
+    plt.savefig('raw_objective_space_plot.png')
+    plt.show()
+
+    # Profit and Drawdown have different scales, so we must normalize using ideal and nadir points
+    approx_ideal = F.min(axis=0)
+    approx_nadir = F.max(axis=0)
+    plt.figure(figsize=(7, 5))
+    plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+    plt.scatter(-approx_ideal[0], approx_ideal[1], facecolors='none', edgecolors='red', marker="*", s=100, label="Ideal Point (Approx)")
+    plt.scatter(-approx_nadir[0], approx_nadir[1], facecolors='none', edgecolors='black', marker="p", s=100, label="Nadir Point (Approx)")
+    plt.title("Raw Objective Space with Ideal and Nadir Points")
+    plt.legend()
+    plt.savefig('raw_objective_space_ideal_nadir_plot.png')
+    plt.show()
+
+    # perform the normalization
+    nF = (F - approx_ideal) / (approx_nadir - approx_ideal)
+    fl = nF.min(axis=0)
+    fu = nF.max(axis=0)
+    print(f"Scale f1: [{fl[0]}, {fu[0]}]")
+    print(f"Scale f2: [{fl[1]}, {fu[1]}]")
+
+    plt.figure(figsize=(7, 5))
+    plt.scatter(nF[:, 0], nF[:, 1], s=30, facecolors='none', edgecolors='blue')
+    plt.title("Normalized Objective Space")
+    plt.savefig('normalize_objective_space_ideal_nadir_plot.png')
+    plt.show()
+
     timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
+
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
     history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
     generations = history["generation"].values
     objectives = history["objectives"].values
     decisions = history["decision_variables"].values
-    timestamped_print("decisions", decisions)
+    # timestamped_print("decisions", decisions)
     best = history["best"].values
 
     historia = []
@@ -198,7 +235,7 @@ def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
     if population is not None:
         for i, x in enumerate(population):
             map_params_to_model(network, x)
-            # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
+            # torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
@@ -257,7 +294,7 @@ if __name__ == '__main__':
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
 
-    timestamped_print("train_and_validate_process = mp.Process.")
+    timestamped_print("Creating process: train_and_validate_process")
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue,
                                                                              args.pop_size,
                                                                              args.n_gen,

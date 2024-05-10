@@ -5,6 +5,7 @@ from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.callback import Callback
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
+import pandas as pd
 
 
 class TradingProblem(ElementwiseProblem):
@@ -41,6 +42,7 @@ class TradingProblem(ElementwiseProblem):
         """
         self._decode_model(x)
         profit, drawdown, num_trades = self.environment.simulate_trading()
+        # print("profit:", profit, "drawdown:", drawdown, "num_trades:", num_trades)
         out["F"] = np.array([-profit, drawdown, -num_trades])
 
     def _decode_model(self, params):
@@ -75,6 +77,12 @@ class PerformanceLogger(Callback):
     def notify(self, algorithm):
         F = algorithm.pop.get("F")  # The objective values
         X = algorithm.pop.get("X")  # The decision variables
+
+        # dff = pd.DataFrame(F)
+        # dff.to_csv("F.csv")
+
+        # df = pd.DataFrame(X)
+        # df.to_csv("X.csv")
         # Log the objective values (and any additional information)
         self.history.append({
             "generation": algorithm.n_gen,
