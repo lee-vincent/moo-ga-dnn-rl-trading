@@ -27,7 +27,7 @@ class DataCollector:
         self.testing_prices = None
         # Unwanted columns
         columns_to_drop_before_normalization = ["ticker"]
-        columns_to_drop_after_backfill = ["open", "high", "low", "adjclose", "volume"]
+        columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume", "adjclose"]
         # Prepare and calculate data
         self._clean_data()
         # print("DataCollector._clean_data():", self.df)
@@ -41,7 +41,7 @@ class DataCollector:
         # Drop unwanted columns
         self.df.drop(columns_to_drop_after_backfill, axis=1, inplace=True)
         # print("DataCollector.drop():", self.df)
-        # self.df.to_csv("prepared_data.csv", index=False)
+        # self.df.to_csv("prepared_data.csv", index=True)
         # Split data into training and testing sets
         self._partition_data(training_end_date)
 
@@ -109,9 +109,9 @@ class DataCollector:
         # Branch for window without time shift
         if time_shift == 0:
             close_series = self.df['adjclose']
-            log_close_series = pd.Series(np.log(close_series), index=close_series.index)
-            hma_series = self._hull_moving_avg(log_close_series, window)
-            new_series = hma_series.diff()
+            hma_series = self._hull_moving_avg(close_series, window)
+            log_hma_series = pd.Series(np.log(hma_series), index=hma_series.index)
+            new_series = log_hma_series.diff()
         # Branch if the data should be time_shifted
         else:
             new_series = pd.Series(self.df[f"velocity_{window}w_0ts"].shift(time_shift), index=self.df.index)
@@ -197,12 +197,12 @@ class DataCollector:
         self.training_tensor = torch.tensor(self.df.loc[:split_index].values, dtype=torch.float32)
         # print("self.training_tensor:", self.training_tensor)
         # training_tensor_df = pd.DataFrame(self.training_tensor)
-        # training_tensor_df.to_csv("training_tensor.csv", index=False)
+        # training_tensor_df.to_csv("training_tensor.csv", index=True)
 
         self.testing_tensor = torch.tensor(self.df.loc[split_index:].values, dtype=torch.float32)
         # print("self.testing_tensor:", self.testing_tensor)
         # testing_tensor_df = pd.DataFrame(self.testing_tensor)
-        # testing_tensor_df.to_csv("testing_tensor_df.csv", index=False)
+        # testing_tensor_df.to_csv("testing_tensor_df.csv", index=True)
 
         if self.closing_prices is not None:
             self.training_prices = self.closing_prices.loc[:split_index]

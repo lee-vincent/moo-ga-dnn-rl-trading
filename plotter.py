@@ -67,7 +67,7 @@ class Plotter():
         self.training_figs_axs.append(self._create_fig_ax(
             title="Population Outcomes"))
         self.training_figs_axs.append(
-            self._create_fig_ax(title="Current Pareto Front (Gen 0)", dimensions=3))
+            self._create_fig_ax(title="Current Pareto Front (Gen 0)"))
         self.previous_frontier = self.training_figs_axs[2][1].scatter(
             [], [])  # For removal logic
 
@@ -101,7 +101,7 @@ class Plotter():
         self.training_figs_axs[1][1].scatter(
             x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
         self.previous_frontier.remove()
-        self.previous_frontier = self.training_figs_axs[2][1].scatter(x_par, y_par, z_par, color=self.cmap(
+        self.previous_frontier = self.training_figs_axs[2][1].scatter(x_par, y_par, color=self.cmap(
             normalized_gen))
         self.training_figs_axs[2][1].set_title(
             f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')

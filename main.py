@@ -21,6 +21,8 @@ from timestamped_print import timestamped_print
 from model_dates import ModelDates
 from fetch_data import fetch_data
 from set_path import set_path
+import sys
+import matplotlib.pyplot as plt
 
 
 def parse_args():
@@ -41,18 +43,6 @@ def parse_args():
         type=int,
         default=100,
         help='Number of generations for the genetic algorithm'
-    )
-    parser.add_argument(
-        '--profit_threshold',
-        type=float,
-        default=100.0,
-        help='Profit threshold for considering a model worth saving'
-    )
-    parser.add_argument(
-        '--drawdown_threshold',
-        type=float,
-        default=40.0,
-        help='Drawdown threshold for considering a model worth saving'
     )
     parser.add_argument(
         '--ticker',
@@ -100,13 +90,9 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-# def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold):
-def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_threshold, training_start_date, training_end_date, testing_end_date, save_data, force_cpu):
+def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
 
     SCRIPT_PATH = Path(__file__).parent
-
-    # Get and load data
-    data = fetch_data(ticker, training_start_date, testing_end_date, save_data)
 
     # Manipulate data and calculate stock measures
     prepared_data = DataCollector(data, training_end_date)
@@ -146,8 +132,7 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
 
     timestamped_print("Create the trading problem")
     # Create the trading problem
-    problem = TradingProblem(prepared_data.training_tensor, network,
-                             trading_env, elementwise_runner=runner)
+    problem = TradingProblem(network, trading_env, elementwise_runner=runner)
 
     timestamped_print("Create the algorithm")
     # Create the algorithm
@@ -173,13 +158,50 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
         save_history=True
     )
 
+    # Pareto-optimal solutions obtained from the optimization procedure are given by
+    F = res.F
+    print("len(F)", len(F))  # this is the number of pareto solutions found we should iterate over this
+    xl, xu = problem.bounds()
+    plt.figure(figsize=(7, 5))
+    plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+    plt.title("Raw Objective Space")
+    plt.savefig('raw_objective_space_plot.png')
+    plt.show()
+
+    # Profit and Drawdown have different scales, so we must normalize using ideal and nadir points
+    approx_ideal = F.min(axis=0)
+    approx_nadir = F.max(axis=0)
+    plt.figure(figsize=(7, 5))
+    plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+    plt.scatter(-approx_ideal[0], approx_ideal[1], facecolors='none', edgecolors='red', marker="*", s=100, label="Ideal Point (Approx)")
+    plt.scatter(-approx_nadir[0], approx_nadir[1], facecolors='none', edgecolors='black', marker="p", s=100, label="Nadir Point (Approx)")
+    plt.title("Raw Objective Space with Ideal and Nadir Points")
+    plt.legend()
+    plt.savefig('raw_objective_space_ideal_nadir_plot.png')
+    plt.show()
+
+    # perform the normalization
+    nF = (F - approx_ideal) / (approx_nadir - approx_ideal)
+    fl = nF.min(axis=0)
+    fu = nF.max(axis=0)
+    print(f"Scale f1: [{fl[0]}, {fu[0]}]")
+    print(f"Scale f2: [{fl[1]}, {fu[1]}]")
+
+    plt.figure(figsize=(7, 5))
+    plt.scatter(nF[:, 0], nF[:, 1], s=30, facecolors='none', edgecolors='blue')
+    plt.title("Normalized Objective Space")
+    plt.savefig('normalize_objective_space_ideal_nadir_plot.png')
+    plt.show()
+
     timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
+
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
     history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
     generations = history["generation"].values
     objectives = history["objectives"].values
     decisions = history["decision_variables"].values
+    # timestamped_print("decisions", decisions)
     # timestamped_print("decisions", decisions)
     best = history["best"].values
 
@@ -214,16 +236,14 @@ def train_and_validate(queue, n_pop, n_gen, ticker, profit_threshold, drawdown_t
     best_network = None
     if population is not None:
         for i, x in enumerate(population):
-            # VL: does map_params_to_model really need to be its own function? hard to tell what's going on
             map_params_to_model(network, x)
-            # VL: why did previous team comment this out?
-            # torch.save(network.state_dict(), f"Output/policy_networks/{date_time}_ngen_{n_gen}_top_{i}.pt")
+            # torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
             # timestamped_print("trading_env.simulate_trading")
             profit, drawdown, num_trades = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
-            if ratio > max_ratio and profit > profit_threshold and drawdown < drawdown_threshold:
+            if ratio > max_ratio:
                 best = ratio
                 best_network = network.state_dict()
 
@@ -260,8 +280,6 @@ if __name__ == '__main__':
 
     timestamped_print(f"Population size: {args.pop_size}")
     timestamped_print(f"Number of generations: {args.n_gen}")
-    timestamped_print(f"Profit threshold: {args.profit_threshold}")
-    timestamped_print(f"Drawdown threshold: {args.drawdown_threshold}")
     timestamped_print(f"Ticker symbol: {args.ticker}")
     timestamped_print(f"Training Start Date: {model_dates.training_start_date}")
     timestamped_print(f"Training End Date: {model_dates.training_end_date}")
@@ -270,20 +288,21 @@ if __name__ == '__main__':
     timestamped_print(f"Save Data: {args.save_data}")
     timestamped_print(f"Force CPU: {args.force_cpu}")
 
+    # Get stock data from yahoo_fin
+    stock_data = fetch_data(args.ticker, model_dates.training_start_date, model_dates.testing_end_date, args.save_data)
+    if stock_data is None:
+        # yahoo_fin could not find data. Exit program
+        sys.exit(1)
+
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
 
-    timestamped_print("train_and_validate_process = mp.Process.")
+    timestamped_print("Creating process: train_and_validate_process")
     train_and_validate_process = mp.Process(target=train_and_validate, args=(queue,
                                                                              args.pop_size,
                                                                              args.n_gen,
-                                                                             args.ticker,
-                                                                             args.profit_threshold,
-                                                                             args.drawdown_threshold,
-                                                                             model_dates.training_start_date,
+                                                                             stock_data,
                                                                              model_dates.training_end_date,
-                                                                             model_dates.testing_end_date,
-                                                                             args.save_data,
                                                                              args.force_cpu))
 
     timestamped_print("train_and_validate_process.start()")
