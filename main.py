@@ -200,7 +200,7 @@ def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
     history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
     generations = history["generation"].values
     objectives = history["objectives"].values
-    decisions = history["decision_variables"].values
+    # decisions = history["decision_variables"].values
     # timestamped_print("decisions", decisions)
     # timestamped_print("decisions", decisions)
     best = history["best"].values

@@ -5,7 +5,7 @@ from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.callback import Callback
 from trading_environment import TradingEnvironment
 from policy_network import PolicyNetwork
-import pandas as pd
+# import pandas as pd
 
 
 class TradingProblem(ElementwiseProblem):
