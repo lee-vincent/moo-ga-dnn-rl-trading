@@ -155,7 +155,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
 
-        # Pareto-optimal solutions obtained from the optimization procedure are given by
+    # Pareto-optimal solutions obtained from the optimization procedure are given by
     F = res.F
     print("len(F)", len(F))  # this is the number of pareto solutions found we should iterate over this
     xl, xu = problem.bounds()
