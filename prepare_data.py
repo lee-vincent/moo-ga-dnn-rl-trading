@@ -64,7 +64,7 @@ class DataCollector:
         # Drop unwanted columns
         self.df.drop(columns_to_drop_after_backfill, axis=1, inplace=True)
         # print("DataCollector.drop():", self.df)
-        self.df.to_csv("prepared_data.csv", index=True)
+        # self.df.to_csv("prepared_data.csv", index=True)
         # Split data into training and testing sets
         self._partition_data(model_dates.close_prices_training_end_date, model_dates)
 
@@ -216,7 +216,7 @@ class DataCollector:
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.df.values, dtype=torch.float32)
         tensor_df = pd.DataFrame(self.data_tensor)
-        tensor_df.to_csv("tensor_df.csv", index=True)
+        # tensor_df.to_csv("tensor_df.csv", index=True)
 
         # Get the integer location of start and end dates
         close_prices_training_start_index = self.df.index.get_loc(model_dates.close_prices_training_start_date)
@@ -241,19 +241,16 @@ class DataCollector:
 
         # Use these indexes to slice the data
         self.training_tensor = torch.tensor(self.df.iloc[close_prices_training_start_index:close_prices_training_end_index + 1].values, dtype=torch.float32)
-        pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
-
-        self.training_close_prices = self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1]
-        self.training_close_prices.to_csv("training_close_prices.csv", index=True)
-
         self.training_open_prices = self.opening_prices.iloc[open_prices_training_start_index:open_prices_training_end_index + 1]
-        self.training_open_prices.to_csv("training_open_prices.csv", index=True)
-
         self.validation_tensor = torch.tensor(self.df.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1].values, dtype=torch.float32)
-        pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
-
-        self.validation_close_prices = self.closing_prices.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1]
-        self.validation_close_prices.to_csv("validation_close_prices.csv", index=True)
-
         self.validation_open_prices = self.opening_prices.iloc[open_prices_validation_start_index:open_prices_validation_end_index + 1]
-        self.validation_open_prices.to_csv("validation_open_prices.csv", index=True)
+
+        # we dont actually need these, but it was a good visual check to ensure correct date ranges
+        # pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
+        # self.training_close_prices = self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1]
+        # self.training_close_prices.to_csv("training_close_prices.csv", index=True)
+        # self.training_open_prices.to_csv("training_open_prices.csv", index=True)
+        # pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
+        # self.validation_close_prices = self.closing_prices.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1]
+        # self.validation_close_prices.to_csv("validation_close_prices.csv", index=True)
+        # self.validation_open_prices.to_csv("validation_open_prices.csv", index=True)
