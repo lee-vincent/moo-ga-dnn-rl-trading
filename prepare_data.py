@@ -215,7 +215,7 @@ class DataCollector:
         """
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.df.values, dtype=torch.float32)
-        tensor_df = pd.DataFrame(self.data_tensor)
+        # tensor_df = pd.DataFrame(self.data_tensor)
         # tensor_df.to_csv("tensor_df.csv", index=True)
 
         # Get the integer location of start and end dates
