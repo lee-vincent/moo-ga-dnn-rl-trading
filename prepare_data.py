@@ -43,9 +43,11 @@ class DataCollector:
         self.data_shape = None
         # need to split data into training and testing
         self.training_tensor = torch.tensor([])
-        self.training_prices = None
-        self.testing_tensor = torch.tensor([])
-        self.testing_prices = None
+        self.training_close_prices = None
+        self.training_open_prices = None
+        self.validation_tensor = torch.tensor([])
+        self.validation_close_prices = None
+        self.validation_open_prices = None
         # Unwanted columns
         columns_to_drop_before_normalization = ["ticker"]
         columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume", "adjclose"]
@@ -237,31 +239,21 @@ class DataCollector:
         print("open_prices_validation_start_index", open_prices_validation_start_index)
         print("open_prices_validation_end_index", open_prices_validation_end_index)
 
-        # Use these indexes to slice your data
+        # Use these indexes to slice the data
         self.training_tensor = torch.tensor(self.df.iloc[close_prices_training_start_index:close_prices_training_end_index + 1].values, dtype=torch.float32)
-        # self.training_tensor = torch.tensor(self.df.loc[:split_index].values, dtype=torch.float32)
-        training_tensor_df = pd.DataFrame(self.training_tensor)
-        training_tensor_df.to_csv("training_tensor.csv", index=True)
+        pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
 
-        # self.training_prices = self.closing_prices.loc[:split_index]
+        self.training_close_prices = self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1]
+        self.training_close_prices.to_csv("training_close_prices.csv", index=True)
 
-        self.training_prices = self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1]
-        self.training_prices.to_csv("training_prices.self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1].csv", index=True)
+        self.training_open_prices = self.opening_prices.iloc[open_prices_training_start_index:open_prices_training_end_index + 1]
+        self.training_open_prices.to_csv("training_open_prices.csv", index=True)
 
-        # self.testing_tensor = torch.tensor(self.df.loc[split_index:].values, dtype=torch.float32)
-        close_prices_training_start_index = self.df.index.get_loc(model_dates.close_prices_training_start_date)
-        close_prices_training_end_index = self.df.index.get_loc(model_dates.close_prices_training_end_date)
-        self.testing_tensor = torch.tensor(self.df.iloc[close_prices_training_start_index:close_prices_training_end_index + 1].values, dtype=torch.float32)
+        self.validation_tensor = torch.tensor(self.df.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1].values, dtype=torch.float32)
+        pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
 
-        # print("self.testing_tensor:", self.testing_tensor)
-        testing_tensor_df = pd.DataFrame(self.testing_tensor)
-        testing_tensor_df.to_csv("testing_tensor_df.csv", index=True)
+        self.validation_close_prices = self.closing_prices.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1]
+        self.validation_close_prices.to_csv("validation_close_prices.csv", index=True)
 
-        self.testing_prices = self.closing_prices.loc[split_index:]
-        self.testing_prices.to_csv("testing_prices.self.closing_prices.loc[split_index:].csv", index=True)
-        # print("self.testing_prices:", self.testing_prices)
-
-        self.training_prices = self.opening_prices
-        # print("opening self.training_prices:", self.training_prices)
-        self.testing_prices = self.opening_prices.loc[split_index:]
-        # print("opening self.testing_prices:", self.testing_prices)
+        self.validation_open_prices = self.opening_prices.iloc[open_prices_validation_start_index:open_prices_validation_end_index + 1]
+        self.validation_open_prices.to_csv("validation_open_prices.csv", index=True)
