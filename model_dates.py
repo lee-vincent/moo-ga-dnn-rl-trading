@@ -3,7 +3,8 @@ import datetime
 
 class ModelDates:
     def __init__(self):
-
+        # actually need to have warm-up time for indicators - need to bake indicators for some amount of time
+        # before training
         # Open/Close Training Series
         self.close_prices_training_start_date = datetime.datetime(2011, 1, 3)  # Market was not open 1/1 and 1/2
         self.open_prices_training_start_date = datetime.datetime(2011, 1, 4)
