@@ -1,6 +1,5 @@
 from pathlib import Path
 import argparse
-import datetime
 import torch
 import pandas as pd
 from torch.nn import DataParallel
@@ -51,11 +50,6 @@ def parse_args():
         help='Ticker symbol for the stock data'
     )
     parser.add_argument(
-        '--training_start_date',
-        type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'),
-        default=datetime.datetime(2011, 1, 1),
-        help='The date in the past the model will be trained from in YYYY-MM-DD format')
-    parser.add_argument(
         '--save_data',
         action='store_true',  # This sets the flag to True if it is present.
         default=False,
@@ -90,12 +84,12 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, data, training_end_date, force_cpu):
+def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Manipulate data and calculate stock measures
-    prepared_data = DataCollector(data, training_end_date)
+    prepared_data = DataCollector(data, model_dates)
 
     # Create the policy network
     network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
@@ -277,20 +271,28 @@ if __name__ == '__main__':
 
     args = parse_args()
 
-    model_dates = ModelDates(args.training_start_date)
-
+    model_dates = ModelDates()
+    # NSGA-II Algorithm Hyper-Parameters
     timestamped_print(f"Population size: {args.pop_size}")
     timestamped_print(f"Number of generations: {args.n_gen}")
+    # Stock Ticker Symbol
     timestamped_print(f"Ticker symbol: {args.ticker}")
-    timestamped_print(f"Training Start Date: {model_dates.training_start_date}")
-    timestamped_print(f"Training End Date: {model_dates.training_end_date}")
-    timestamped_print(f"Testing Start Date: {model_dates.testing_start_date}")
-    timestamped_print(f"Testing End Date: {model_dates.testing_end_date}")
+    # Open/Close Training Series
+    timestamped_print(f"Close Prices Training Start Date: {model_dates.close_prices_training_start_date}")
+    timestamped_print(f"Open Prices Training Start Date: {model_dates.open_prices_training_start_date}")
+    timestamped_print(f"Close Prices Training End Date: {model_dates.close_prices_training_end_date}")
+    timestamped_print(f"Open Prices Training End Date: {model_dates.open_prices_training_end_date}")
+    # Open/Close Validation Series
+    timestamped_print(f"Close Prices Validation Start Date: {model_dates.close_prices_validation_start_date}")
+    timestamped_print(f"Open Prices Validation Start Date: {model_dates.open_prices_validation_start_date}")
+    timestamped_print(f"Close Prices Validation End Date: {model_dates.close_prices_validation_end_date}")
+    timestamped_print(f"Open Prices Validation End Date: {model_dates.open_prices_validation_end_date}")
+    # Flags
     timestamped_print(f"Save Data: {args.save_data}")
     timestamped_print(f"Force CPU: {args.force_cpu}")
 
     # Get stock data from yahoo_fin
-    stock_data = fetch_data(args.ticker, model_dates.training_start_date, model_dates.testing_end_date, args.save_data)
+    stock_data = fetch_data(args.ticker, model_dates.close_prices_training_start_date, model_dates.open_prices_validation_end_date, args.save_data)
     if stock_data is None:
         # yahoo_fin could not find data. Exit program
         sys.exit(1)
@@ -303,7 +305,7 @@ if __name__ == '__main__':
                                                                              args.pop_size,
                                                                              args.n_gen,
                                                                              stock_data,
-                                                                             model_dates.training_end_date,
+                                                                             model_dates,
                                                                              args.force_cpu))
 
     timestamped_print("train_and_validate_process.start()")

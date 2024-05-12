@@ -9,7 +9,8 @@ def fetch_data(ticker: str, start_date: datetime.date, end_date: datetime.date, 
     """
 
     try:
-        df = si.get_data(ticker=ticker, start_date=start_date, end_date=end_date, index_as_date=False, interval="1d")
+        # get_data is not end date inclusive, so have to add 1 day to get correct range
+        df = si.get_data(ticker=ticker, start_date=start_date, end_date=(end_date+datetime.timedelta(days=1)), index_as_date=False, interval="1d")
     except AssertionError:
         # yahoo_fin could not find data. Return 1 for main.py to exit program
         print("Error retrieving stock data. Check ticker symbol.")
