@@ -643,3 +643,10 @@ Scale f2: [0.0, 1.0]
 2024-05-12 21:01:02:  Profit: -61.598377906799314, Drawdown: 76.80402939796448, Num Trades: 60.0, Ratio: -0.8020201334440904
 2024-05-12 21:01:02:  Profit: -36.31866404533387, Drawdown: 69.20146885299683, Num Trades: 49.0, Ratio: -0.5248250455851569
 2024-05-12 21:01:02:  torch.save(best_network)
+
+Close figures to continue...
+
+2024-05-12 22:35:42:  train_and_validate_process.join()
+2024-05-12 22:35:42:  train_and_validate_process.close()
+2024-05-12 22:35:42:  queue.close()
+2024-05-12 22:35:42:  Training and validation process finished.
