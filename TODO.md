@@ -13,12 +13,6 @@
 hyperbolic tangent (tanh) often tends to work better in practice, since it’s not limited to only positive outputs in the hidden layer(s).
 more feature selection https://www.investopedia.com/terms/o/onbalancevolume.asp
 it is possible to compile pymoo modules: https://pymoo.org/installation.html
-try a v100 on ubuntu python3.10, try compiling 3.12 on ubuntu, then try lowering code base to python 3.8 for running on rabbit
-drop un-needed columns OHLV - and change close to adjclose
-Current Data Date Ranges
-stock data range        2011-01-01 -> 2023-12-31
-training_tensor range   2011-01-01 -> 2022-01-01
-testing_tensor range    2022-01-02 -> 2023-12-31
 
 Proposed Data Date Ranges
 stock data range        2011-01-01 -> DATE_PREVIOUS_MARKET_CLOSE

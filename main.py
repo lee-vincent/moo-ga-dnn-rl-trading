@@ -116,7 +116,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     trading_env = TradingEnvironment(
         prepared_data.training_tensor,
         network,
-        prepared_data.training_prices,
+        prepared_data.training_open_prices,
         force_cpu)
 
     # initialize the thread pool and create the runner for ElementwiseProblem parallelization
@@ -221,9 +221,8 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     history_df.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}_avg.csv"))
 
     # below is where test/validation happens - we should already have the pareto set from above.
-    trading_env.set_features(prepared_data.testing_tensor)
-    # trading_env.set_closing_prices(prepared_data.testing_prices)
-    trading_env.set_opening_prices(prepared_data.testing_prices)
+    trading_env.set_features(prepared_data.validation_tensor)
+    trading_env.set_opening_prices(prepared_data.validation_open_prices)
     population = None if res.pop is None else res.pop.get("X")
 
     validation_results = []
