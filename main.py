@@ -152,14 +152,18 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
         save_history=True
     )
 
-    # Pareto-optimal solutions obtained from the optimization procedure are given by
+    timestamped_print("Optimization Completed")
+    date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
+
+        # Pareto-optimal solutions obtained from the optimization procedure are given by
     F = res.F
     print("len(F)", len(F))  # this is the number of pareto solutions found we should iterate over this
     xl, xu = problem.bounds()
     plt.figure(figsize=(7, 5))
     plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
     plt.title("Raw Objective Space")
-    plt.savefig('raw_objective_space_plot.png')
+    # plt.savefig('raw_objective_space_plot.png')
+    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"raw_objective_space_plot.{date_time}.png"))
     plt.show()
 
     # Profit and Drawdown have different scales, so we must normalize using ideal and nadir points
@@ -171,7 +175,8 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     plt.scatter(-approx_nadir[0], approx_nadir[1], facecolors='none', edgecolors='black', marker="p", s=100, label="Nadir Point (Approx)")
     plt.title("Raw Objective Space with Ideal and Nadir Points")
     plt.legend()
-    plt.savefig('raw_objective_space_ideal_nadir_plot.png')
+    # plt.savefig('raw_objective_space_ideal_nadir_plot.png')
+    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"raw_objective_space_ideal_nadir_plot.{date_time}.png"))
     plt.show()
 
     # perform the normalization
@@ -184,11 +189,9 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     plt.figure(figsize=(7, 5))
     plt.scatter(nF[:, 0], nF[:, 1], s=30, facecolors='none', edgecolors='blue')
     plt.title("Normalized Objective Space")
-    plt.savefig('normalize_objective_space_ideal_nadir_plot.png')
+    # plt.savefig('normalize_objective_space_ideal_nadir_plot.png')
+    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"normalize_objective_space_ideal_nadir_plot.{date_time}.png"))
     plt.show()
-
-    timestamped_print("Optimization Completed")
-    date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
 
     history: pd.DataFrame = pd.DataFrame(performance_logger.history)
     history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
