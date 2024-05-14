@@ -229,15 +229,15 @@ class DataCollector:
         open_prices_validation_start_index = self.df.index.get_loc(model_dates.open_prices_validation_start_date)
         open_prices_validation_end_index = self.df.index.get_loc(model_dates.open_prices_validation_end_date)
 
-        print("close_prices_training_start_index", close_prices_training_start_index)
-        print("close_prices_training_end_index", close_prices_training_end_index)
-        print("open_prices_training_start_index", open_prices_training_start_index)
-        print("open_prices_training_end_index", open_prices_training_end_index)
+        # print("close_prices_training_start_index", close_prices_training_start_index)
+        # print("close_prices_training_end_index", close_prices_training_end_index)
+        # print("open_prices_training_start_index", open_prices_training_start_index)
+        # print("open_prices_training_end_index", open_prices_training_end_index)
 
-        print("close_prices_validation_start_index", close_prices_validation_start_index)
-        print("close_prices_validation_end_index", close_prices_validation_end_index)
-        print("open_prices_validation_start_index", open_prices_validation_start_index)
-        print("open_prices_validation_end_index", open_prices_validation_end_index)
+        # print("close_prices_validation_start_index", close_prices_validation_start_index)
+        # print("close_prices_validation_end_index", close_prices_validation_end_index)
+        # print("open_prices_validation_start_index", open_prices_validation_start_index)
+        # print("open_prices_validation_end_index", open_prices_validation_end_index)
 
         # Use these indexes to slice the data
         self.training_tensor = torch.tensor(self.df.iloc[close_prices_training_start_index:close_prices_training_end_index + 1].values, dtype=torch.float32)
