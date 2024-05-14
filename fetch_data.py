@@ -16,7 +16,6 @@ def fetch_data(ticker: str, model_dates, save: bool = False):
         print("Error retrieving stock data. Check ticker symbol.")
         return None
 
-    print(f"First available date for {ticker}: {df.date[0].to_pydatetime()}")
     model_dates.set_indicator_warmup_start_date(df.date[0].to_pydatetime())
 
     if save:

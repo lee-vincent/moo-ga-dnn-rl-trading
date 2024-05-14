@@ -24,7 +24,6 @@ import sys
 import matplotlib.pyplot as plt
 
 
-
 def parse_args():
     # Create the parser
     parser = argparse.ArgumentParser(
@@ -277,11 +276,21 @@ if __name__ == '__main__':
     args = parse_args()
 
     model_dates = ModelDates()
+
+    # Get stock data from yahoo_fin
+    stock_data = fetch_data(args.ticker, model_dates, args.save_data)
+    if stock_data is None:
+        # yahoo_fin could not find data. Exit program
+        sys.exit(1)
+
     # NSGA-II Algorithm Hyper-Parameters
     timestamped_print(f"Population size: {args.pop_size}")
     timestamped_print(f"Number of generations: {args.n_gen}")
     # Stock Ticker Symbol
     timestamped_print(f"Ticker symbol: {args.ticker}")
+    # Indicator Warm-Up Series
+    timestamped_print(f"Indicator Warm-Up Start Date: {model_dates.indicator_warmup_start_date}")
+    timestamped_print(f"Indicator Warm-Up End Date: {model_dates.indicator_warmup_end_date}")
     # Open/Close Training Series
     timestamped_print(f"Close Prices Training Start Date: {model_dates.close_prices_training_start_date}")
     timestamped_print(f"Open Prices Training Start Date: {model_dates.open_prices_training_start_date}")
@@ -295,12 +304,6 @@ if __name__ == '__main__':
     # Flags
     timestamped_print(f"Save Data: {args.save_data}")
     timestamped_print(f"Force CPU: {args.force_cpu}")
-
-    # Get stock data from yahoo_fin
-    stock_data = fetch_data(args.ticker, model_dates, args.save_data)
-    if stock_data is None:
-        # yahoo_fin could not find data. Exit program
-        sys.exit(1)
 
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)

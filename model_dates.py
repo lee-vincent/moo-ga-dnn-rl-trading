@@ -26,4 +26,3 @@ class ModelDates:
 
     def set_indicator_warmup_start_date(self, start_date):
         self.indicator_warmup_start_date = start_date
-        print("model_dates.self.indicator_warmup_start_date:", self.indicator_warmup_start_date)
