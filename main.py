@@ -297,7 +297,7 @@ if __name__ == '__main__':
     timestamped_print(f"Force CPU: {args.force_cpu}")
 
     # Get stock data from yahoo_fin
-    stock_data = fetch_data(args.ticker, model_dates.close_prices_training_start_date, model_dates.open_prices_validation_end_date, args.save_data)
+    stock_data = fetch_data(args.ticker, model_dates, args.save_data)
     if stock_data is None:
         # yahoo_fin could not find data. Exit program
         sys.exit(1)
