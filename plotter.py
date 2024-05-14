@@ -180,8 +180,8 @@ class Plotter():
             fig_ax[0].savefig(set_path(self.script_path, f"Output/performance_log/ngen_{self.max_gen}", f"{timestamp}_training_{counter}.png"))
         try:
             self._create_training_outcomes_video()
-        except:
-            print("\nContinuing without recording training video...\n")
+        except Exception as e:
+            print("\nContinuing without recording training video\nAn error occurred while initializing the recorder:", e)
 
         # Generate validation scatters
         validation_results = self.queue.get()
