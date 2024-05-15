@@ -78,7 +78,7 @@ class AlpacaConnect:
         """
         Get all open, cancelled, and filled orders
         """
-        response = requests.get(f'{self.orders_url}?status=all', headers=self.HEADERS)
+        response = requests.get(f'{self._orders_url}?status=all', headers=self.HEADERS)
         return response.json()
 
     def get_all_open_positions(self):
@@ -107,10 +107,8 @@ class AlpacaConnect:
 
         # Add/update fields based on the order type
         if order_type == 'stop':
-            payload['type'] = order_type
             payload['stop_price'] = stop_price
         elif order_type == 'limit':
-            payload['type'] = order_type
             payload['limit_price'] = stop_price
 
         response = requests.post(f'{self._orders_url}', json=payload, headers=self.HEADERS)
