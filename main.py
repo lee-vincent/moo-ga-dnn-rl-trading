@@ -24,6 +24,9 @@ import sys
 import matplotlib.pyplot as plt
 
 
+IS_TRAINING = True
+
+
 def parse_args():
     # Create the parser
     parser = argparse.ArgumentParser(
@@ -278,7 +281,7 @@ if __name__ == '__main__':
     model_dates = ModelDates()
 
     # Get stock data from yahoo_fin
-    stock_data = fetch_data(args.ticker, model_dates, args.save_data)
+    stock_data = fetch_data(args.ticker, model_dates, IS_TRAINING, args.save_data)
     if stock_data is None:
         # yahoo_fin could not find data. Exit program
         sys.exit(1)
