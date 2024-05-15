@@ -24,6 +24,8 @@ class AlpacaConnect:
             self._account_url = f'{self._base_url}/account'
             self._portfolio_url = f'{self._base_url}/account/portfolio/history'
             self.activity_url = f'{self._base_url}/account/activities?activity=trades'
+        # else:
+            # block for real money trading not implemented yet
 
     def get_account_summary(self):
         """
@@ -87,19 +89,41 @@ class AlpacaConnect:
         """
         Closes a position of a given ticker
         """
-        response = requests.delete(f'{self._positions_url}/ticker', headers=self.HEADERS)
+        response = requests.delete(f'{self._positions_url}/{ticker}', headers=self.HEADERS)
         return response.json()
 
-    def place_order(self):
-        pass
+    def place_order(self, ticker_symbol, qty, side, order_type='market', time_in_force='gtc', stop_price=float(0)):
+        """
+        Places a buy or sell order with the given information.
+        """
+        # Create base payload with common fields
+        payload = {
+            'symbol': ticker_symbol,
+            'qty': qty,
+            'side': side,                       # buy/sell
+            'type': order_type,
+            'time_in_force': time_in_force,     # default gtc, good until canceled
+        }
+
+        # Add/update fields based on the order type
+        if order_type == 'stop':
+            payload['type'] = order_type
+            payload['stop_price'] = stop_price
+        elif order_type == 'limit':
+            payload['type'] = order_type
+            payload['limit_price'] = stop_price
+
+        response = requests.post(f'{self._orders_url}', json=payload, headers=self.HEADERS)
+        return response.json()
 
     def cancel_one_order(self, order_id):
         """
-        Cancels an order based on the given id
+        Cancels an order based on the given id.
+        Returns a 204 No Content response on success, otherwise
+        returns a 422 Unprocessable Entity (not cancelable)
         """
-        pass
-        # TODO Check https://docs.alpaca.markets/reference/deleteorderforaccount-1
-        # need account_id as well?
+        response = requests.delete(f'{self._orders_url}/{order_id}', headers=self.HEADERS)
+        return response.status_code
 
     def cancel_all_orders(self):
         """
