@@ -19,11 +19,11 @@ class AlpacaConnect:
         if paper:
             self._base_url = "https://paper-api.alpaca.markets/v2"
 
-            self._orders_url = f'{self.base_url}/orders'
-            self._positions_url = f'{self.base_url}/positions'
-            self._account_url = f'{self.base_url}/account'
-            self._portfolio_url = f'{self.base_url}/account/portfolio/history'
-            self.activity_url = f'{self.base_url}/account/activities?activity=trades'
+            self._orders_url = f'{self._base_url}/orders'
+            self._positions_url = f'{self._base_url}/positions'
+            self._account_url = f'{self._base_url}/account'
+            self._portfolio_url = f'{self._base_url}/account/portfolio/history'
+            self.activity_url = f'{self._base_url}/account/activities?activity=trades'
 
     def get_account_summary(self):
         """
