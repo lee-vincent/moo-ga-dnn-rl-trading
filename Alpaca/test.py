@@ -19,9 +19,12 @@ payload = {
   "qty": "5",
   "symbol": "TQQQ",
 }
+#
+# response = requests.post(BASE_URL + "orders", json=payload, headers=HEADERS)
+# print("MAKE ORDER", response.text)
+#
+# response = requests.get(BASE_URL + "orders", headers=HEADERS)
+# print("GET ORDERS", response.text)
 
-response = requests.post(BASE_URL + "orders", json=payload, headers=HEADERS)
-print("MAKE ORDER", response.text)
-
-response = requests.get(BASE_URL + "orders", headers=HEADERS)
-print("GET ORDERS", response.text)
+response = requests.get(f'{BASE_URL}/account/activities?activity=trades', headers=HEADERS)
+print(response.json())
