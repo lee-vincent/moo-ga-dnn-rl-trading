@@ -5,15 +5,36 @@ import datetime
 from sklearn.preprocessing import MinMaxScaler
 
 
+# Date Ranges
+# Data is pulled from 1/1/2011 to 12/31/2023, but must factor in holidays and weekends
+# Model must be trained on stock measures calculated based on adjusted closing prices
+# We will execute Buy/Sell/Hold orders on the next day's open price
+# Therefore, the adjusted closing prices we use to calculate the stock measures the
+# model is trained on will be offset by 1 day from the openning prices we execute on as follows:
+
+# Open/Close Training Series
+# self.close_prices_training_start_date = datetime.datetime(2011, 1, 3)  # Market was not open 1/1 and 1/2
+# self.open_prices_training_start_date = datetime.datetime(2011, 1, 4)
+# self.close_prices_training_end_date = datetime.datetime(2021, 12, 30)
+# self.open_prices_training_end_date = datetime.datetime(2021, 12, 31)  # Friday
+
+# Open/Close Validation Series
+# self.close_prices_validation_start_date = datetime.datetime(2022, 1, 3)  # Market was not open 1/1 and 1/2
+# self.open_prices_validation_start_date = datetime.datetime(2022, 1, 4)
+# self.close_prices_validation_end_date = datetime.datetime(2023, 12, 28)
+# self.open_prices_validation_end_date = datetime.datetime(2023, 12, 29)  # Friday
+
+
 class DataCollector:
     """
     Represents an object that handles raw stock data. Executes stock metric calculations, drops unneeded columns, and
     creates a tensor to be used in training or testing.
     """
-    def __init__(self, df: pd.DataFrame, training_end_date: datetime.date):
+    def __init__(self, df: pd.DataFrame, model_dates):
         # Input data
         self.df = df
         self.closing_prices = None
+        self.opening_prices = None
         # Window size and time shift in days, used for calculations
         self.windows = [16, 32, 64]
         self.time_shifts = [2, 4, 6, 8, 10]
@@ -22,12 +43,14 @@ class DataCollector:
         self.data_shape = None
         # need to split data into training and testing
         self.training_tensor = torch.tensor([])
-        self.training_prices = None
-        self.testing_tensor = torch.tensor([])
-        self.testing_prices = None
+        self.training_close_prices = None
+        self.training_open_prices = None
+        self.validation_tensor = torch.tensor([])
+        self.validation_close_prices = None
+        self.validation_open_prices = None
         # Unwanted columns
         columns_to_drop_before_normalization = ["ticker"]
-        columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume"]
+        columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume", "adjclose"]
         # Prepare and calculate data
         self._clean_data()
         # print("DataCollector._clean_data():", self.df)
@@ -41,9 +64,9 @@ class DataCollector:
         # Drop unwanted columns
         self.df.drop(columns_to_drop_after_backfill, axis=1, inplace=True)
         # print("DataCollector.drop():", self.df)
-        # self.df.to_csv("prepared_data.csv", index=False)
+        # self.df.to_csv("prepared_data.csv", index=True)
         # Split data into training and testing sets
-        self._partition_data(training_end_date)
+        self._partition_data(model_dates.close_prices_training_end_date, model_dates)
 
     def _clean_data(self) -> None:
         """
@@ -60,6 +83,7 @@ class DataCollector:
         # Removes rows where all values are missing or just the timestamp is missing
         self.df = self.df.drop(rows_to_drop.index)
         self.closing_prices = self.df["adjclose"]
+        self.opening_prices = self.df["open"]
 
     def _calculate_stock_measures(self):
         """
@@ -109,9 +133,9 @@ class DataCollector:
         # Branch for window without time shift
         if time_shift == 0:
             close_series = self.df['adjclose']
-            log_close_series = pd.Series(np.log(close_series), index=close_series.index)
-            hma_series = self._hull_moving_avg(log_close_series, window)
-            new_series = hma_series.diff()
+            hma_series = self._hull_moving_avg(close_series, window)
+            log_hma_series = pd.Series(np.log(hma_series), index=hma_series.index)
+            new_series = log_hma_series.diff()
         # Branch if the data should be time_shifted
         else:
             new_series = pd.Series(self.df[f"velocity_{window}w_0ts"].shift(time_shift), index=self.df.index)
@@ -185,27 +209,48 @@ class DataCollector:
         # Catches any remaining NaN cells
         self.df = self.df.bfill().ffill().fillna(0)
 
-    def _partition_data(self, split_index: datetime.date) -> None:
+    def _partition_data(self, split_index: datetime.date, model_dates) -> None:
         """
         Partitions the data into training and testing sets.
         """
         # Convert the normalized dataframe to a tensor
         self.data_tensor = torch.tensor(self.df.values, dtype=torch.float32)
         # tensor_df = pd.DataFrame(self.data_tensor)
-        # tensor_df.to_csv("tensor_df.csv", index=False)
+        # tensor_df.to_csv("tensor_df.csv", index=True)
 
-        self.training_tensor = torch.tensor(self.df.loc[:split_index].values, dtype=torch.float32)
-        # print("self.training_tensor:", self.training_tensor)
-        # training_tensor_df = pd.DataFrame(self.training_tensor)
-        # training_tensor_df.to_csv("training_tensor.csv", index=False)
+        # Get the integer location of start and end dates
+        close_prices_training_start_index = self.df.index.get_loc(model_dates.close_prices_training_start_date)
+        close_prices_training_end_index = self.df.index.get_loc(model_dates.close_prices_training_end_date)
+        open_prices_training_start_index = self.df.index.get_loc(model_dates.open_prices_training_start_date)
+        open_prices_training_end_index = self.df.index.get_loc(model_dates.open_prices_training_end_date)
 
-        self.testing_tensor = torch.tensor(self.df.loc[split_index:].values, dtype=torch.float32)
-        # print("self.testing_tensor:", self.testing_tensor)
-        # testing_tensor_df = pd.DataFrame(self.testing_tensor)
-        # testing_tensor_df.to_csv("testing_tensor_df.csv", index=False)
+        close_prices_validation_start_index = self.df.index.get_loc(model_dates.close_prices_validation_start_date)
+        close_prices_validation_end_index = self.df.index.get_loc(model_dates.close_prices_validation_end_date)
+        open_prices_validation_start_index = self.df.index.get_loc(model_dates.open_prices_validation_start_date)
+        open_prices_validation_end_index = self.df.index.get_loc(model_dates.open_prices_validation_end_date)
 
-        if self.closing_prices is not None:
-            self.training_prices = self.closing_prices.loc[:split_index]
-            # print("self.training_prices:", self.training_prices)
-            self.testing_prices = self.closing_prices.loc[split_index:]
-            # print("self.testing_prices:", self.testing_prices)
+        print("close_prices_training_start_index", close_prices_training_start_index)
+        print("close_prices_training_end_index", close_prices_training_end_index)
+        print("open_prices_training_start_index", open_prices_training_start_index)
+        print("open_prices_training_end_index", open_prices_training_end_index)
+
+        print("close_prices_validation_start_index", close_prices_validation_start_index)
+        print("close_prices_validation_end_index", close_prices_validation_end_index)
+        print("open_prices_validation_start_index", open_prices_validation_start_index)
+        print("open_prices_validation_end_index", open_prices_validation_end_index)
+
+        # Use these indexes to slice the data
+        self.training_tensor = torch.tensor(self.df.iloc[close_prices_training_start_index:close_prices_training_end_index + 1].values, dtype=torch.float32)
+        self.training_open_prices = self.opening_prices.iloc[open_prices_training_start_index:open_prices_training_end_index + 1]
+        self.validation_tensor = torch.tensor(self.df.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1].values, dtype=torch.float32)
+        self.validation_open_prices = self.opening_prices.iloc[open_prices_validation_start_index:open_prices_validation_end_index + 1]
+
+        # we dont actually need these, but it was a good visual check to ensure correct date ranges
+        # pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
+        # self.training_close_prices = self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1]
+        # self.training_close_prices.to_csv("training_close_prices.csv", index=True)
+        # self.training_open_prices.to_csv("training_open_prices.csv", index=True)
+        # pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
+        # self.validation_close_prices = self.closing_prices.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1]
+        # self.validation_close_prices.to_csv("validation_close_prices.csv", index=True)
+        # self.validation_open_prices.to_csv("validation_open_prices.csv", index=True)
