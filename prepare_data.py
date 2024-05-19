@@ -39,7 +39,7 @@ class DataCollector:
         self.windows = [16, 32, 64]
         self.time_shifts = [2, 4, 6, 8, 10]
         # Output tensor
-        self.data_tensor = torch.tensor([])
+        self.data_tensor = torch.tensor([])  # this can be deleted? not used
         self.data_shape = None
         # need to split data into training and testing
         self.training_tensor = torch.tensor([])
@@ -49,22 +49,16 @@ class DataCollector:
         self.validation_close_prices = None
         self.validation_open_prices = None
         # Unwanted columns
-        columns_to_drop_before_normalization = ["ticker"]
+        columns_to_drop_before_standardization = ["ticker"]
         columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume", "adjclose"]
         # Prepare and calculate data
         self._clean_data()
-        # print("DataCollector._clean_data():", self.df)
         self._calculate_stock_measures()
-        # print("DataCollector._calculate_stock_measures():", self.df)
-        self.df.drop(columns_to_drop_before_normalization, axis=1, inplace=True)
-        self._normalize_data()
-        # print("DataCollector._normalize_data():", self.df)
+        self.df.drop(columns_to_drop_before_standardization, axis=1, inplace=True)
         self._backfill_data()
-        # print("DataCollector._backfill_data():", self.df)
         # Drop unwanted columns
         self.df.drop(columns_to_drop_after_backfill, axis=1, inplace=True)
-        # print("DataCollector.drop():", self.df)
-        # self.df.to_csv("prepared_data.csv", index=True)
+        self._standardize_data()
         # Split data into training and testing sets
         self._partition_data(model_dates.close_prices_training_end_date, model_dates)
 
@@ -186,19 +180,27 @@ class DataCollector:
         # Add series to self.df
         self.df[f"atr_{window}w_{time_shift}ts"] = true_range_series
 
-    def _normalize_data(self):
+    def _standardize_data(self):
         """
-        Normalize all values except for the timestamp column. Min-max scaling to normalize the data between 0 and 1.
+        Standardize all values except for the timestamp column by dividing each element by the absolute value
+        of the largest element
         """
         # Extract the timestamp column
         timestamp_column = self.df.index
         # Convert the self.df to a NumPy array
         data_array = self.df.values
-        # Normalize all data columns except for the timestamp column
-        scaler = MinMaxScaler()
-        normalized_data = scaler.fit_transform(data_array)
-        # Recreate the DataFrame with the normalized data
-        self.df = pd.DataFrame(normalized_data, index=timestamp_column, columns=self.df.columns)
+        print("data_array:", data_array)
+        np.savetxt('data_array.csv', data_array, delimiter=',')
+
+        data_array_max_abs_val = np.max(np.abs(data_array))
+        print("data_array_min:", np.min(data_array))
+        print("data_array_max:", np.max(data_array))
+        print("data_array_max_abs_val:", data_array_max_abs_val)
+        # Standardize all data columns except for the timestamp column
+        standardized_data_array = data_array / data_array_max_abs_val
+        print("standardized_data_array:", standardized_data_array)
+        np.savetxt('standardized_data_array.csv', standardized_data_array, delimiter=',')
+        self.df = pd.DataFrame(standardized_data_array, index=timestamp_column, columns=self.df.columns)
 
     def _backfill_data(self):
         """
@@ -213,10 +215,9 @@ class DataCollector:
         """
         Partitions the data into training and testing sets.
         """
-        # Convert the normalized dataframe to a tensor
+        # Convert the standardized dataframe to a tensor
         self.data_tensor = torch.tensor(self.df.values, dtype=torch.float32)
-        # tensor_df = pd.DataFrame(self.data_tensor)
-        # tensor_df.to_csv("tensor_df.csv", index=True)
+        pd.DataFrame(self.data_tensor).to_csv("tensor_df.csv", index=True)
 
         # Get the integer location of start and end dates
         close_prices_training_start_index = self.df.index.get_loc(model_dates.close_prices_training_start_date)
@@ -245,12 +246,14 @@ class DataCollector:
         self.validation_tensor = torch.tensor(self.df.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1].values, dtype=torch.float32)
         self.validation_open_prices = self.opening_prices.iloc[open_prices_validation_start_index:open_prices_validation_end_index + 1]
 
+        print("self.training_tensor.shape[1]:", self.training_tensor.shape[1])
+        print("self.validation_tensor.shape[1]:", self.validation_tensor.shape[1])
         # we dont actually need these, but it was a good visual check to ensure correct date ranges
-        # pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
+        pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
         # self.training_close_prices = self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1]
         # self.training_close_prices.to_csv("training_close_prices.csv", index=True)
         # self.training_open_prices.to_csv("training_open_prices.csv", index=True)
-        # pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
+        pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
         # self.validation_close_prices = self.closing_prices.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1]
         # self.validation_close_prices.to_csv("validation_close_prices.csv", index=True)
         # self.validation_open_prices.to_csv("validation_open_prices.csv", index=True)

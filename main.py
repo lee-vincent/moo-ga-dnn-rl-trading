@@ -95,6 +95,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     prepared_data = DataCollector(data, model_dates)
 
     # Create the policy network
+    print("prepared_data.data_tensor.shape[1]:", prepared_data.data_tensor.shape[1])
     network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
 
     timestamped_print(f"CUDA available? {torch.cuda.is_available()}")
