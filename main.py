@@ -199,36 +199,6 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"normalize_objective_space_ideal_nadir_plot.{date_time}.png"))
     plt.show()
 
-    history: pd.DataFrame = pd.DataFrame(performance_logger.history)
-    history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
-    generations = history["generation"].values
-    objectives = history["objectives"].values
-    # decisions = history["decision_variables"].values
-    # timestamped_print("decisions", decisions)
-    # timestamped_print("decisions", decisions)
-    best = history["best"].values
-
-    historia = []
-
-    for i in range(len(generations)):
-        avg_profit, avg_drawdown, avg_trades = 0, 0, 0
-        objs = objectives[i]
-        for row in objs:
-            avg_profit += row[0]
-            avg_drawdown += row[1]
-            avg_trades += row[2]
-        avg_profit /= len(objs)
-        avg_drawdown /= len(objs)
-        avg_trades /= len(objs)
-        row = [generations[i], avg_profit, avg_drawdown, avg_trades, best[i]]
-        historia.append(row)
-
-    history_df: pd.DataFrame = pd.DataFrame(
-        columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"],
-        data=historia
-    )
-    history_df.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}_avg.csv"))
-
     # below is where test/validation happens - we should already have the pareto set from above.
     trading_env.set_features(prepared_data.validation_tensor)
     trading_env.set_opening_prices(prepared_data.validation_open_prices)
