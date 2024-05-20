@@ -163,7 +163,9 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     # this is still returning many non-dominated solutions - need to find and take out NDS from training
     # then push the NDS's through the validation set and show all the scatters
     F = res.F
+    X = res.X
     print("len(F)", len(F))  # this is the number of pareto solutions found we should iterate over this
+    print("len(X)", len(X))
     xl, xu = problem.bounds()
     plt.figure(figsize=(7, 5))
     plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
@@ -217,7 +219,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
             if ratio > max_ratio:
-                best = ratio
+                max_ratio = ratio
                 best_network = network.state_dict()
 
             timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
