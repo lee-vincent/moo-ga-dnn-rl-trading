@@ -84,7 +84,6 @@ class PerformanceLogger(Callback):
         # dff = pd.DataFrame(F)
         # dff.to_csv("F.csv")
 
-
         # df = pd.DataFrame(X)
         # df.to_csv("X.csv")
         # Log the objective values (and any additional information)

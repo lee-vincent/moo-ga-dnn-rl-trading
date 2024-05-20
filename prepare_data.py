@@ -189,17 +189,17 @@ class DataCollector:
         timestamp_column = self.df.index
         # Convert the self.df to a NumPy array
         data_array = self.df.values
-        print("data_array:", data_array)
-        np.savetxt('data_array.csv', data_array, delimiter=',')
+        # print("data_array:", data_array)
+        # np.savetxt('data_array.csv', data_array, delimiter=',')
 
         data_array_max_abs_val = np.max(np.abs(data_array))
-        print("data_array_min:", np.min(data_array))
-        print("data_array_max:", np.max(data_array))
-        print("data_array_max_abs_val:", data_array_max_abs_val)
+        # print("data_array_min:", np.min(data_array))
+        # print("data_array_max:", np.max(data_array))
+        # print("data_array_max_abs_val:", data_array_max_abs_val)
         # Standardize all data columns except for the timestamp column
         standardized_data_array = data_array / data_array_max_abs_val
-        print("standardized_data_array:", standardized_data_array)
-        np.savetxt('standardized_data_array.csv', standardized_data_array, delimiter=',')
+        # print("standardized_data_array:", standardized_data_array)
+        # np.savetxt('standardized_data_array.csv', standardized_data_array, delimiter=',')
         self.df = pd.DataFrame(standardized_data_array, index=timestamp_column, columns=self.df.columns)
 
     def _backfill_data(self):
@@ -217,7 +217,7 @@ class DataCollector:
         """
         # Convert the standardized dataframe to a tensor
         self.data_tensor = torch.tensor(self.df.values, dtype=torch.float32)
-        pd.DataFrame(self.data_tensor).to_csv("tensor_df.csv", index=True)
+        # pd.DataFrame(self.data_tensor).to_csv("tensor_df.csv", index=True)
 
         # Get the integer location of start and end dates
         close_prices_training_start_index = self.df.index.get_loc(model_dates.close_prices_training_start_date)
@@ -246,14 +246,14 @@ class DataCollector:
         self.validation_tensor = torch.tensor(self.df.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1].values, dtype=torch.float32)
         self.validation_open_prices = self.opening_prices.iloc[open_prices_validation_start_index:open_prices_validation_end_index + 1]
 
-        print("self.training_tensor.shape[1]:", self.training_tensor.shape[1])
-        print("self.validation_tensor.shape[1]:", self.validation_tensor.shape[1])
+        # print("self.training_tensor.shape[1]:", self.training_tensor.shape[1])
+        # print("self.validation_tensor.shape[1]:", self.validation_tensor.shape[1])
         # we dont actually need these, but it was a good visual check to ensure correct date ranges
-        pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
+        # pd.DataFrame(self.training_tensor).to_csv("training_tensor.csv", index=True)
         # self.training_close_prices = self.closing_prices.iloc[close_prices_training_start_index:close_prices_training_end_index + 1]
         # self.training_close_prices.to_csv("training_close_prices.csv", index=True)
         # self.training_open_prices.to_csv("training_open_prices.csv", index=True)
-        pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
+        # pd.DataFrame(self.validation_tensor).to_csv("validation_tensor_df.csv", index=True)
         # self.validation_close_prices = self.closing_prices.iloc[close_prices_validation_start_index:close_prices_validation_end_index + 1]
         # self.validation_close_prices.to_csv("validation_close_prices.csv", index=True)
         # self.validation_open_prices.to_csv("validation_open_prices.csv", index=True)
