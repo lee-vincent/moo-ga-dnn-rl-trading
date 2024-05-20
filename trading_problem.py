@@ -78,11 +78,12 @@ class PerformanceLogger(Callback):
         self.queue = queue
 
     def notify(self, algorithm):
-        F = algorithm.pop.get("F")  # The objective values
+        F = algorithm.pop.get("F")  # The objective values #algorithm.pop.non_dominated_inds
         X = algorithm.pop.get("X")  # The decision variables
 
         # dff = pd.DataFrame(F)
         # dff.to_csv("F.csv")
+
 
         # df = pd.DataFrame(X)
         # df.to_csv("X.csv")
