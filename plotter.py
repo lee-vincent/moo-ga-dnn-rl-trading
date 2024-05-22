@@ -59,7 +59,7 @@ class Plotter():
         self.training_figs_axs.append(self._create_fig_ax(title="Population Outcomes"))
         self.training_figs_axs.append(self._create_fig_ax(title="Current Pareto Front (Gen 0)"))
         print("len(self.training_figs_axs):", len(self.training_figs_axs))
-        self.previous_frontier = self.training_figs_axs[2][1].scatter([], [])  # For removal logic
+        self.previous_frontier = self.training_figs_axs[1][1].scatter([], [])  # For removal logic
         print("len(self.training_figs_axs):", len(self.training_figs_axs))
 
     def _create_validation_plots(self, x_data: list, y_data: list):
