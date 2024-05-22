@@ -159,10 +159,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
 
-    # Pareto-optimal solutions obtained from the optimization procedure are given by
-    # this is still returning many non-dominated solutions - need to find and take out NDS from training
-    # then push the NDS's through the validation set and show all the scatters
-    F = res.F
+    F = res.F  # Pareto-optimal solutions obtained from the optimization procedure are given by
     X = res.X
     print("len(F)", len(F))  # this is the number of pareto solutions found we should iterate over this
     print("len(X)", len(X))
