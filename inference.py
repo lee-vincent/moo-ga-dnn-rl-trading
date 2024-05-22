@@ -122,6 +122,6 @@ if __name__ == '__main__':
         prepared_data.inference_open_prices,
         True)
 
-    model_path = './inference_candidates/TQQQ/ngen_600/npop_100/model_0_2024-05-14_21-12-48.pt'
+    model_path = './inference_candidates/TQQQ/ngen_300/npop_200/model_23_profit_282.19_drawdown_31.14_2024-05-22_20-01-31.pt'
     # map_params_to_model ??
     exit()
