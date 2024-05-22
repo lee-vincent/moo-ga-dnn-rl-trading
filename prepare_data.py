@@ -29,7 +29,8 @@ class DataCollector:
     Represents an object that handles raw stock data. Executes stock metric calculations, drops unneeded columns, and
     creates a tensor to be used in training or testing.
     """
-    def __init__(self, df: pd.DataFrame, model_dates):
+    def __init__(self, df: pd.DataFrame, model_dates, _IS_TRAINING: bool = True):
+        self._IS_TRAINING = _IS_TRAINING
         # Input data
         self.df = df
         self.closing_prices = None
@@ -232,22 +233,23 @@ class DataCollector:
         open_prices_validation_start_index = self.df.index.get_loc(model_dates.open_prices_validation_start_date)
         open_prices_validation_end_index = self.df.index.get_loc(model_dates.open_prices_validation_end_date)
 
-        close_prices_inference_start_index = self.df.index.get_loc(model_dates.close_prices_validation_start_date)
-        close_prices_inference_end_index = self.df.index.get_loc(model_dates.inference_date)
+        if not self._IS_TRAINING:
+            close_prices_inference_start_index = self.df.index.get_loc(model_dates.close_prices_validation_start_date)
+            close_prices_inference_end_index = self.df.index.get_loc(model_dates.inference_date)
 
-        open_prices_inference_start_index = self.df.index.get_loc(model_dates.open_prices_validation_start_date)
-        open_prices_inference_end_index = close_prices_inference_end_index
+            open_prices_inference_start_index = self.df.index.get_loc(model_dates.open_prices_validation_start_date)
+            open_prices_inference_end_index = close_prices_inference_end_index
 
-        self.inference_tensor = torch.tensor(self.df.iloc[close_prices_inference_start_index:close_prices_inference_end_index + 1].values, dtype=torch.float32)
-        self.inference_open_prices = self.opening_prices.iloc[open_prices_inference_start_index:open_prices_inference_end_index + 1]
-        self.inference_open_prices.to_csv("inference_open_prices.csv", index=True)
-        self.inference_close_prices = self.closing_prices.iloc[close_prices_inference_start_index:close_prices_inference_end_index + 1]
-        self.inference_close_prices.to_csv("inference_close_prices.csv", index=True)
+            self.inference_tensor = torch.tensor(self.df.iloc[close_prices_inference_start_index:close_prices_inference_end_index + 1].values, dtype=torch.float32)
+            self.inference_open_prices = self.opening_prices.iloc[open_prices_inference_start_index:open_prices_inference_end_index + 1]
+            self.inference_open_prices.to_csv("inference_open_prices.csv", index=True)
+            self.inference_close_prices = self.closing_prices.iloc[close_prices_inference_start_index:close_prices_inference_end_index + 1]
+            self.inference_close_prices.to_csv("inference_close_prices.csv", index=True)
 
-        print("close_prices_inference_start_index", close_prices_inference_start_index)
-        print("close_prices_inference_end_index", close_prices_inference_end_index)
-        print("open_prices_inference_start_index", open_prices_inference_start_index)
-        print("open_prices_inference_end_index", open_prices_inference_end_index)
+            print("close_prices_inference_start_index", close_prices_inference_start_index)
+            print("close_prices_inference_end_index", close_prices_inference_end_index)
+            print("open_prices_inference_start_index", open_prices_inference_start_index)
+            print("open_prices_inference_end_index", open_prices_inference_end_index)
 
         # print("close_prices_training_start_index", close_prices_training_start_index)
         # print("close_prices_training_end_index", close_prices_training_end_index)

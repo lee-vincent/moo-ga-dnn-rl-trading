@@ -92,7 +92,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu, ticker
     SCRIPT_PATH = Path(__file__).parent
 
     # Manipulate data and calculate stock measures
-    prepared_data = DataCollector(data, model_dates)
+    prepared_data = DataCollector(data, model_dates, IS_TRAINING)
 
     # Create the policy network
     print("prepared_data.data_tensor.shape[1]:", prepared_data.data_tensor.shape[1])
