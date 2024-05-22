@@ -22,7 +22,6 @@ from model_dates import ModelDates
 from fetch_data import fetch_data
 from set_path import set_path
 import sys
-import matplotlib.pyplot as plt
 
 
 IS_TRAINING = True
