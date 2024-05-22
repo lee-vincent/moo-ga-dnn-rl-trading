@@ -87,7 +87,7 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
+def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu, ticker):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -171,7 +171,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
         profit, drawdown = trading_env.simulate_trading()
         timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}")
         if profit > 0.0:
-            torch.save(network.state_dict(), set_path(SCRIPT_PATH, f"inference_candidates/ngen_{n_gen}/npop_{n_pop}/", f"model_{i}_profit_{profit:.2f}_drawdown_{drawdown:.2f}_{date_time}.pt"))
+            torch.save(network.state_dict(), set_path(SCRIPT_PATH, f"inference_candidates/{ticker}/ngen_{n_gen}/npop_{n_pop}/", f"model_{i}_profit_{profit:.2f}_drawdown_{drawdown:.2f}_{date_time}.pt"))
         validation_results.append([profit, drawdown])
 
     queue.put(validation_results)
@@ -227,7 +227,8 @@ if __name__ == '__main__':
                                                                              args.n_gen,
                                                                              stock_data,
                                                                              model_dates,
-                                                                             args.force_cpu))
+                                                                             args.force_cpu,
+                                                                             args.ticker))
 
     timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()
