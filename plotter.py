@@ -180,7 +180,7 @@ class Plotter():
 
         # Generate validation scatters
         validation_results = self.queue.get()
-        x_data, y_data = zip(*[(x, y) for x, y, *r in validation_results])
+        x_data, y_data = zip(*[(x, y) for x, y, in validation_results])
         self._create_validation_plots(x_data, y_data)
 
         print("\nClose figures to continue...\n")

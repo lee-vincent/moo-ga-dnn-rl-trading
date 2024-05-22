@@ -167,61 +167,59 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     xl, xu = problem.bounds()
     plt.figure(figsize=(7, 5))
     plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
-    plt.title("Raw Objective Space")
+    plt.title("Pareto Optimal Solutions")
     # plt.savefig('raw_objective_space_plot.png')
     plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"raw_objective_space_plot.{date_time}.png"))
-    plt.show()
-
-    # Profit and Drawdown have different scales, so we must normalize using ideal and nadir points
-    approx_ideal = F.min(axis=0)
-    approx_nadir = F.max(axis=0)
-    plt.figure(figsize=(7, 5))
-    plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
-    plt.scatter(-approx_ideal[0], approx_ideal[1], facecolors='none', edgecolors='red', marker="*", s=100, label="Ideal Point (Approx)")
-    plt.scatter(-approx_nadir[0], approx_nadir[1], facecolors='none', edgecolors='black', marker="p", s=100, label="Nadir Point (Approx)")
-    plt.title("Raw Objective Space with Ideal and Nadir Points")
-    plt.legend()
-    # plt.savefig('raw_objective_space_ideal_nadir_plot.png')
-    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"raw_objective_space_ideal_nadir_plot.{date_time}.png"))
     plt.show()
 
     # below is where test/validation happens - we should already have the pareto set from above.
     trading_env.set_features(prepared_data.validation_tensor)
     trading_env.set_opening_prices(prepared_data.validation_open_prices)
-    population = None if res.pop is None else res.pop.get("X")
-
     validation_results = []
-    max_ratio = 0.0
-    best_network = None
-    if population is not None:
-        for i, x in enumerate(population):
-            map_params_to_model(network, x)
-            # torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
-            trading_env.reset()
-            # timestamped_print("trading_env.simulate_trading")
-            profit, drawdown = trading_env.simulate_trading()
-            ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
+    for i, _x in enumerate(X):
+        map_params_to_model(network, _x)
+        torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
+        trading_env.reset()
+        profit, drawdown = trading_env.simulate_trading()
+        timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}")
+        validation_results.append([profit, drawdown])
 
-            if ratio > max_ratio:
-                max_ratio = ratio
-                best_network = network.state_dict()
+    queue.put(validation_results)
 
-            timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Ratio: {ratio}")
-            validation_results.append([profit, drawdown, ratio, str(x)])
-        timestamped_print("torch.save(best_network)")
-        torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
+    # population = None if res.pop is None else res.pop.get("X")
 
-        queue.put(validation_results)
+    # validation_results = []
+    # max_ratio = 0.0
+    # best_network = None
+    # if population is not None:
+    #     for i, x in enumerate(population):
+    #         map_params_to_model(network, x)
+    #         # torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
+    #         trading_env.reset()
+    #         # timestamped_print("trading_env.simulate_trading")
+    #         profit, drawdown = trading_env.simulate_trading()
+    #         ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
-        validation_results_df = pd.DataFrame(
-            columns=["profit", "drawdown", "ratio", "chromosome"],
-            data=validation_results
-        )
+    #         if ratio > max_ratio:
+    #             max_ratio = ratio
+    #             best_network = network.state_dict()
 
-        # sort by ratio
-        validation_results_df = validation_results_df.sort_values(by="ratio", ascending=False)
+    #         timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Ratio: {ratio}")
+    #         validation_results.append([profit, drawdown, ratio, str(x)])
+    #     timestamped_print("torch.save(best_network)")
+    #     torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
 
-        validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
+    #     queue.put(validation_results)
+
+    #     validation_results_df = pd.DataFrame(
+    #         columns=["profit", "drawdown", "ratio", "chromosome"],
+    #         data=validation_results
+    #     )
+
+    #     # sort by ratio
+    #     validation_results_df = validation_results_df.sort_values(by="ratio", ascending=False)
+
+    #     validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
 
     pool.close()
 
