@@ -83,7 +83,7 @@ class Plotter():
         self.training_figs_axs[0][1].scatter(x_data, y_data, color=self.cmap(normalized_gen))
         self.training_figs_axs[1][1].scatter(x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
         self.previous_frontier.remove()
-        self.previous_frontier = self.training_figs_axs[2][1].scatter(x_par, y_par, color=self.cmap(normalized_gen))
+        self.previous_frontier = self.training_figs_axs[1][1].scatter(x_par, y_par, color=self.cmap(normalized_gen))
         self.training_figs_axs[2][1].set_title(f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
 
     def _create_training_outcomes_video(self):
