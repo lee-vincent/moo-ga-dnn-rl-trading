@@ -26,7 +26,7 @@ def fetch_data(ticker: str, model_dates, _IS_TRAINING: bool = True, save: bool =
     model_dates.set_indicator_warmup_start_date(df.date[0].to_pydatetime())
 
     if not _IS_TRAINING:
-        _end_date_received = df['date'].iloc[-1].date()
+        _end_date_received = df['date'].iloc[-1]
         model_dates.set_inference_date(_end_date_received)
         # print("_end_date_received:", _end_date_received)
         if (_end_date_requested != _end_date_received):

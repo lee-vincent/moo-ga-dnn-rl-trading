@@ -113,4 +113,15 @@ if __name__ == '__main__':
     timestamped_print(f"Save Data: {args.save_data}")
     timestamped_print(f"Force CPU: {args.force_cpu}")
 
+    prepared_data = DataCollector(stock_data, model_dates)
+    network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
+    network.to(torch.device("cpu"))
+    trading_env = TradingEnvironment(
+        prepared_data.inference_tensor,
+        network,
+        prepared_data.inference_open_prices,
+        True)
+
+    model_path = './inference_candidates/TQQQ/ngen_600/npop_100/model_0_2024-05-14_21-12-48.pt'
+    # map_params_to_model ??
     exit()
