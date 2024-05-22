@@ -91,13 +91,12 @@ class Plotter():
         """
         Updates training plots with outcomes from current gen's solutions.
         """
-        x_data, y_data, z_data = self.obj_outcomes[-1]
-        x_par, y_par, z_par = zip(*self.final_pareto_frontier)
+        x_data, y_data = self.obj_outcomes[-1]
+        x_par, y_par = zip(*self.final_pareto_frontier)
         x_par = [-x for x in x_par]
-        z_par = [-z for z in z_par]
         normalized_gen = (current_gen-1) / self.max_gen
         self.training_figs_axs[0][1].scatter(
-            x_data, y_data, z_data, color=self.cmap(normalized_gen))
+            x_data, y_data, color=self.cmap(normalized_gen))
         self.training_figs_axs[1][1].scatter(
             x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
         self.previous_frontier.remove()
@@ -115,7 +114,7 @@ class Plotter():
 
             # For each training generation
             for i in range(self.max_gen):
-                x_data, y_data, z_data = self.obj_outcomes[i]
+                x_data, y_data = self.obj_outcomes[i]
                 fig, ax = self._create_fig_ax(
                     f"Generation {i+1} Outcomes", colorbar=False)
                 ax.scatter(x_data, y_data)
@@ -131,9 +130,8 @@ class Plotter():
             if not any(other_point is not point and
                        other_point[0] <= point[0] and
                        other_point[1] <= point[1] and
-                       other_point[2] <= point[2] and
                        (other_point[0] < point[0] or other_point[1]
-                           < point[1] or other_point[2] < point[2])
+                           < point[1])
                        for other_point in outcomes):
                 pareto_front.append(point)
         return pareto_front
@@ -162,10 +160,9 @@ class Plotter():
                 self.final_pareto_frontier = self._calc_pareto_front(
                     self.final_pareto_frontier)
                 # Transform data for plotting since trade count/profit negated for min optimization
-                x_data, y_data, z_data = zip(*gen_data)
+                x_data, y_data = zip(*gen_data)
                 x_data = [-x for x in x_data]
-                z_data = [-z for z in z_data]
-                self.obj_outcomes.append((x_data, y_data, z_data))
+                self.obj_outcomes.append((x_data, y_data))
                 self._update_training_plots(current_generation)
 
             for figure in self.training_figs_axs:
@@ -185,9 +182,8 @@ class Plotter():
 
         # Generate validation scatters
         validation_results = self.queue.get()
-        x_data, y_data, z_data = zip(*[(x, y, z)
-                                     for x, y, z, *r in validation_results])
-        self._create_validation_plots(x_data, y_data, z_data)
+        x_data, y_data = zip(*[(x, y) for x, y, *r in validation_results])
+        self._create_validation_plots(x_data, y_data)
 
         print("\nClose figures to continue...\n")
         plt.show(block=True)
