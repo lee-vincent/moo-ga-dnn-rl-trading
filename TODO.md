@@ -10,48 +10,6 @@
 ## Michelle
 
 ## Vinnie
-hyperbolic tangent (tanh) often tends to work better in practice, since it’s not limited to only positive outputs in the hidden layer(s).
-more feature selection https://www.investopedia.com/terms/o/onbalancevolume.asp
-it is possible to compile pymoo modules: https://pymoo.org/installation.html
-
-Proposed Data Date Ranges
-stock data range        2011-01-01 -> DATE_PREVIOUS_MARKET_CLOSE
-calculating DATE_PREVIOUS_MARKET_CLOSE:
-DAYS_STOCK_MARKET_OPEN=[Monday,Tuesday,...,Friday]
-TODAY is Monday 4-22-2024 
-if TODAY in DAYS_STOCK_MARKET_OPEN
-then DATE_PREVIOUS_MARKET_CLOSE = (TODAY - 1) = Friday 4-19-2024
-training_tensor range     2011-01-01 - 2022-01-01
-testing_tensor range    2022-01-02 - DATE_PREVIOUS_MARKET_CLOSE
-DAY_TO_RUN_INFERENCE_ON = TODAY
-
-always test on the last 365 days, and everything before going back to 2011 is training
-
-spent time re-writing the yahoo_fin_data module to be ticker agnostic
-mention all of the libraries/modules in main.py that we all had to learn about
-spending significant time figuring out how to install python 3.12.3 on amazon linux 2
-researching nvidia driver install
-researching best AWS instance types that support GPUs for this use case
-researching best type of nvidia gpu to use for this problem
-had to resive EBS volumes in AWS many times to get it right
-NVIDIA GRID K520
-NVIDIA Tesla M60
-NVIDIA T4 Tensor Core
-NVIDIA A10G
-NVIDIA Tesla K80
-NVIDIA Tesla V100
-
-might make sense to install NVIDIA Nsight for CUDA utilization monitoring
-
-AWS has a free tier - could i get everyone set up in a free tier acount?
-
-does compilied python modules make a speed difference
-https://oregonstateuniversity-my.sharepoint.com/:p:/g/personal/leevi_oregonstate_edu/Ef0DT3pwcJVOoJtWvW97j1ABBXIVHZdChkwsiDDfygoDKg?e=ZSCJTz
-
-pip3 install jupyter
-pip3 install torch_tb_profiler
-could use terraform to provision instances or work with the aws-algorithmic-trading repo
-
 
 ## data normalization
 Example Normalization Process
@@ -203,11 +161,12 @@ export PATH=/home/ubuntu/.local/bin${PATH:+:${PATH}}
 pip3 install -r requirements.txt
 INSTANCE_NAME=$(TOKEN=`curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -sH "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/Name)
 INSTANCE_TYPE=$(TOKEN=`curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -sH "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-type)
-N_GEN=600
+N_GEN=300
+N_POP=200
 TICKER="tqqq"
 JOB_START_TIME="$(TZ='America/New_York' date +'%m-%d-%Y_%I%M%p')"
-nohup python3 -u main.py --n_gen $N_GEN --ticker $TICKER --force_cpu > "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt" 2>&1 &
-tail -f "${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_${JOB_START_TIME}.txt"
+nohup python3 -u main.py --n_gen $N_GEN --pop_size $N_POP --ticker $TICKER --force_cpu > "/tmp/${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_npop-${N_POP}_${JOB_START_TIME}.txt" 2>&1 &
+tail -f "/tmp/${INSTANCE_NAME}_${INSTANCE_TYPE}_${TICKER}_ngen-${N_GEN}_npop-${N_POP}_${JOB_START_TIME}.txt"
 
 ```
 r7iz.xlarge	    1:34:55
