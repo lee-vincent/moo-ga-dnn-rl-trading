@@ -160,7 +160,6 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
 
-    F = res.F  # Pareto-optimal solutions obtained from the optimization procedure are given by
     X = res.X
 
     # below is where test/validation happens - we should already have the pareto set from above.
