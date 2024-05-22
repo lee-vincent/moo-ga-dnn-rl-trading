@@ -71,20 +71,18 @@ class Plotter():
         self.previous_frontier = self.training_figs_axs[2][1].scatter(
             [], [])  # For removal logic
 
-    def _create_validation_plots(self, x_data: list, y_data: list, z_data: list):
+    def _create_validation_plots(self, x_data: list, y_data: list):
         """
         Generates scatter of validation outcomes for candidate solutions.
         """
-        fig_3d, ax_3d = self._create_fig_ax(
-            "Validation Outcomes", dimensions=3, colorbar=False)
-        fig_2d, ax_2d = self._create_fig_ax(
-            "Validation Outcomes", colorbar=False)
+        # fig_3d, ax_3d = self._create_fig_ax("Validation Outcomes", dimensions=3, colorbar=False)
+        fig_2d, ax_2d = self._create_fig_ax("Validation Outcomes", colorbar=False)
         ax_2d.scatter(x_data, y_data)
-        ax_3d.scatter(x_data, y_data, z_data)
-        fig_3d.canvas.draw()
+        # ax_3d.scatter(x_data, y_data, z_data)
+        # fig_3d.canvas.draw()
         fig_2d.canvas.draw()
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        fig_3d.savefig(set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_3D.png"))
+        # fig_3d.savefig(set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_3D.png"))
         fig_2d.savefig(set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_2D.png"))
 
     def _update_training_plots(self, current_gen: int) -> None:
