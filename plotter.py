@@ -20,28 +20,23 @@ class Plotter():
         self.training_figs_axs = []  # Collection of plots to update while training/validating
         self.script_path = Path(__file__).parent  # Path script is run from
 
-    def _create_fig_ax(self, title: str, dimensions: int = 2, xlabel: str = "Profit",
-                       ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True,
-                       y_percentage: bool = True, z_percentage: bool = False, colorbar: bool = True) -> tuple:
+    def _create_fig_ax(self,
+                       title: str,
+                       dimensions: int = 2,
+                       xlabel: str = "Profit",
+                       ylabel: str = "Drawdown",
+                       x_percentage: bool = True,
+                       y_percentage: bool = True,
+                       colorbar: bool = True) -> tuple:
         """
         Configures and returns base fig/ax for plots.
         """
         fig = plt.figure(figsize=(8, 6))
-        if dimensions == 2:
-            with plt.style.context('ggplot'):
-                ax = fig.add_subplot()
-                fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
-        # else:
-        #     ax = fig.add_subplot(projection='3d')
-        #     fig.subplots_adjust(left=0, right=0.9, top=0.9, bottom=0.1)
-        #     ax.set_zlabel(zlabel, fontsize='large', fontstyle='italic')
-        #     if z_percentage:
-        #         ax.zaxis.set_major_formatter(
-        #             matplotlib.ticker.PercentFormatter())
-
+        with plt.style.context('ggplot'):
+            ax = fig.add_subplot()
+            fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
         ax.set_title(title, fontsize='x-large', weight='bold')
-        ax.set_xlabel(xlabel, fontsize='large',
-                      fontstyle='italic', labelpad=12)
+        ax.set_xlabel(xlabel, fontsize='large', fontstyle='italic', labelpad=12)
         ax.set_ylabel(ylabel, fontsize='large', fontstyle='italic', labelpad=5)
 
         if x_percentage:
@@ -62,7 +57,6 @@ class Plotter():
         """
         Creates training plots.
         """
-        # self.training_figs_axs.append(self._create_fig_ax(title="Population Outcomes", dimensions=3))
         self.training_figs_axs.append(self._create_fig_ax(title="Population Outcomes"))
         self.training_figs_axs.append(self._create_fig_ax(title="Current Pareto Front (Gen 0)"))
         self.previous_frontier = self.training_figs_axs[1][1].scatter([], [])  # For removal logic
@@ -85,13 +79,10 @@ class Plotter():
         x_par, y_par = zip(*self.final_pareto_frontier)
         x_par = [-x for x in x_par]
         normalized_gen = (current_gen-1) / self.max_gen
-        # self.training_figs_axs[0][1].scatter(x_data, y_data, color=self.cmap(normalized_gen))
         self.training_figs_axs[0][1].scatter(x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
         self.previous_frontier.remove()
-        self.previous_frontier = self.training_figs_axs[1][1].scatter(x_par, y_par, color=self.cmap(
-            normalized_gen))
-        self.training_figs_axs[1][1].set_title(
-            f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
+        self.previous_frontier = self.training_figs_axs[1][1].scatter(x_par, y_par, color=self.cmap(normalized_gen))
+        self.training_figs_axs[1][1].set_title(f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
 
     def _create_training_outcomes_video(self):
         """
