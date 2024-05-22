@@ -116,5 +116,4 @@ class TradingEnvironment:
         profit_pct = scaled_profit * 100
         self.profit = profit_pct
 
-        return self.profit, self.drawdown, float(self.num_trades)
-        # return self.profit, self.drawdown
+        return self.profit, self.drawdown
