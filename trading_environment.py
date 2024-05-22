@@ -61,15 +61,12 @@ class TradingEnvironment:
 
         self.reset()
         local_decisions = []
-
+        torch_device = "cuda" if (torch.cuda.is_available() and not self.force_cpu) else "cpu"
         # Simulate trading over the dataset
         # print("self.features", self.features)
         for i in range(len(self.features)):  # this is all the rows in  training_tqqq_prepared.csv
             feature_vector = self.features[i:i+1]  # Get the feature vector for the current day
-            if self.force_cpu:
-                feature_vector = feature_vector.to(torch.device("cpu"))
-            else:
-                feature_vector = feature_vector.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+            feature_vector = feature_vector.to(torch.device(torch_device))
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
             local_decisions.append(decision)
             current_price = self.opening_prices.iloc[i]  # i was adjusted in prepare_data so no need to add +1
