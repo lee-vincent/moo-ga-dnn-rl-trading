@@ -178,10 +178,12 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     validation_results = []
     for i, _x in enumerate(X):
         map_params_to_model(network, _x)
-        torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
         trading_env.reset()
         profit, drawdown = trading_env.simulate_trading()
         timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}")
+        if profit > 0.0:
+            torch.save(network.state_dict(), set_path(SCRIPT_PATH, f"inference_candidates/ngen_{n_gen}/npop_{n_pop}/", f"model_{i}_profit_{profit:.2f}_drawdown_{drawdown:.2f}_{date_time}.pt"))
+            # torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
         validation_results.append([profit, drawdown])
 
     queue.put(validation_results)
