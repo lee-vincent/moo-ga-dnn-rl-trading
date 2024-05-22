@@ -94,6 +94,8 @@ if __name__ == '__main__':
 
     # Stock Ticker Symbol
     timestamped_print(f"Ticker symbol: {args.ticker}")
+    # Close prices to perform inference on
+    timestamped_print(f"Inference Date: {model_dates.inference_date}")
     # Indicator Warm-Up Series
     timestamped_print(f"Indicator Warm-Up Start Date: {model_dates.indicator_warmup_start_date}")
     timestamped_print(f"Indicator Warm-Up End Date: {model_dates.indicator_warmup_end_date}")

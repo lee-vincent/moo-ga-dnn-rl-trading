@@ -27,6 +27,7 @@ def fetch_data(ticker: str, model_dates, _IS_TRAINING: bool = True, save: bool =
 
     if not _IS_TRAINING:
         _end_date_received = df['date'].iloc[-1].date()
+        model_dates.set_inference_date(_end_date_received)
         # print("_end_date_received:", _end_date_received)
         if (_end_date_requested != _end_date_received):
             print(f"WARNING: Close price for {ticker} not available for {_end_date_requested}. Is the market still open or is it a holiday?")
