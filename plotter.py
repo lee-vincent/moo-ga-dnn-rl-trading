@@ -20,28 +20,22 @@ class Plotter():
         self.training_figs_axs = []  # Collection of plots to update while training/validating
         self.script_path = Path(__file__).parent  # Path script is run from
 
-    def _create_fig_ax(self, title: str, dimensions: int = 2, xlabel: str = "Profit",
-                       ylabel: str = "Drawdown", zlabel: str = "Trade Count", x_percentage: bool = True,
-                       y_percentage: bool = True, z_percentage: bool = False, colorbar: bool = True) -> tuple:
+    def _create_fig_ax(self,
+                       title: str,
+                       xlabel: str = "Profit",
+                       ylabel: str = "Drawdown",
+                       x_percentage: bool = True,
+                       y_percentage: bool = True,
+                       colorbar: bool = True) -> tuple:
         """
         Configures and returns base fig/ax for plots.
         """
         fig = plt.figure(figsize=(8, 6))
-        if dimensions == 2:
-            with plt.style.context('ggplot'):
-                ax = fig.add_subplot()
-                fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
-        else:
-            ax = fig.add_subplot(projection='3d')
-            fig.subplots_adjust(left=0, right=0.9, top=0.9, bottom=0.1)
-            ax.set_zlabel(zlabel, fontsize='large', fontstyle='italic')
-            if z_percentage:
-                ax.zaxis.set_major_formatter(
-                    matplotlib.ticker.PercentFormatter())
-
+        with plt.style.context('ggplot'):
+            ax = fig.add_subplot()
+            fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
         ax.set_title(title, fontsize='x-large', weight='bold')
-        ax.set_xlabel(xlabel, fontsize='large',
-                      fontstyle='italic', labelpad=12)
+        ax.set_xlabel(xlabel, fontsize='large', fontstyle='italic', labelpad=12)
         ax.set_ylabel(ylabel, fontsize='large', fontstyle='italic', labelpad=5)
 
         if x_percentage:
@@ -62,49 +56,35 @@ class Plotter():
         """
         Creates training plots.
         """
-        self.training_figs_axs.append(self._create_fig_ax(
-            title="Population Outcomes", dimensions=3))
-        self.training_figs_axs.append(self._create_fig_ax(
-            title="Population Outcomes"))
-        self.training_figs_axs.append(
-            self._create_fig_ax(title="Current Pareto Front (Gen 0)"))
-        self.previous_frontier = self.training_figs_axs[2][1].scatter(
-            [], [])  # For removal logic
+        self.training_figs_axs.append(self._create_fig_ax(title="Population Outcomes"))
+        self.training_figs_axs.append(self._create_fig_ax(title="Current Pareto Front (Gen 0)"))
+        print("len(self.training_figs_axs):", len(self.training_figs_axs))
+        self.previous_frontier = self.training_figs_axs[2][1].scatter([], [])  # For removal logic
+        print("len(self.training_figs_axs):", len(self.training_figs_axs))
 
-    def _create_validation_plots(self, x_data: list, y_data: list, z_data: list):
+    def _create_validation_plots(self, x_data: list, y_data: list):
         """
         Generates scatter of validation outcomes for candidate solutions.
         """
-        fig_3d, ax_3d = self._create_fig_ax(
-            "Validation Outcomes", dimensions=3, colorbar=False)
-        fig_2d, ax_2d = self._create_fig_ax(
-            "Validation Outcomes", colorbar=False)
+        fig_2d, ax_2d = self._create_fig_ax("Validation Outcomes", colorbar=False)
         ax_2d.scatter(x_data, y_data)
-        ax_3d.scatter(x_data, y_data, z_data)
-        fig_3d.canvas.draw()
         fig_2d.canvas.draw()
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        fig_3d.savefig(set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_3D.png"))
         fig_2d.savefig(set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_2D.png"))
 
     def _update_training_plots(self, current_gen: int) -> None:
         """
         Updates training plots with outcomes from current gen's solutions.
         """
-        x_data, y_data, z_data = self.obj_outcomes[-1]
-        x_par, y_par, z_par = zip(*self.final_pareto_frontier)
+        x_data, y_data = self.obj_outcomes[-1]
+        x_par, y_par = zip(*self.final_pareto_frontier)
         x_par = [-x for x in x_par]
-        z_par = [-z for z in z_par]
         normalized_gen = (current_gen-1) / self.max_gen
-        self.training_figs_axs[0][1].scatter(
-            x_data, y_data, z_data, color=self.cmap(normalized_gen))
-        self.training_figs_axs[1][1].scatter(
-            x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
+        self.training_figs_axs[0][1].scatter(x_data, y_data, color=self.cmap(normalized_gen))
+        self.training_figs_axs[1][1].scatter(x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
         self.previous_frontier.remove()
-        self.previous_frontier = self.training_figs_axs[2][1].scatter(x_par, y_par, color=self.cmap(
-            normalized_gen))
-        self.training_figs_axs[2][1].set_title(
-            f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
+        self.previous_frontier = self.training_figs_axs[2][1].scatter(x_par, y_par, color=self.cmap(normalized_gen))
+        self.training_figs_axs[2][1].set_title(f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
 
     def _create_training_outcomes_video(self):
         """
@@ -115,7 +95,7 @@ class Plotter():
 
             # For each training generation
             for i in range(self.max_gen):
-                x_data, y_data, z_data = self.obj_outcomes[i]
+                x_data, y_data = self.obj_outcomes[i]
                 fig, ax = self._create_fig_ax(
                     f"Generation {i+1} Outcomes", colorbar=False)
                 ax.scatter(x_data, y_data)
@@ -131,9 +111,7 @@ class Plotter():
             if not any(other_point is not point and
                        other_point[0] <= point[0] and
                        other_point[1] <= point[1] and
-                       other_point[2] <= point[2] and
-                       (other_point[0] < point[0] or other_point[1]
-                           < point[1] or other_point[2] < point[2])
+                       (other_point[0] < point[0] or other_point[1] < point[1])
                        for other_point in outcomes):
                 pareto_front.append(point)
         return pareto_front
@@ -148,6 +126,7 @@ class Plotter():
             if not self.queue.empty():
                 current_generation += 1
                 if current_generation > self.max_gen:
+                    print("continue that should be a break statement")
                     continue
                 gen_data = self.queue.get()
 
@@ -157,10 +136,9 @@ class Plotter():
                 self.final_pareto_frontier = self._calc_pareto_front(
                     self.final_pareto_frontier)
                 # Transform data for plotting since trade count/profit negated for min optimization
-                x_data, y_data, z_data = zip(*gen_data)
+                x_data, y_data = zip(*gen_data)
                 x_data = [-x for x in x_data]
-                z_data = [-z for z in z_data]
-                self.obj_outcomes.append((x_data, y_data, z_data))
+                self.obj_outcomes.append((x_data, y_data))
                 self._update_training_plots(current_generation)
 
             for figure in self.training_figs_axs:
@@ -180,9 +158,8 @@ class Plotter():
 
         # Generate validation scatters
         validation_results = self.queue.get()
-        x_data, y_data, z_data = zip(*[(x, y, z)
-                                     for x, y, z, *r in validation_results])
-        self._create_validation_plots(x_data, y_data, z_data)
+        x_data, y_data = zip(*[(x, y) for x, y, *r in validation_results])
+        self._create_validation_plots(x_data, y_data)
 
         print("\nClose figures to continue...\n")
         plt.show(block=True)

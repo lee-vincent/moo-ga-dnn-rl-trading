@@ -213,22 +213,22 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
             # torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
             trading_env.reset()
             # timestamped_print("trading_env.simulate_trading")
-            profit, drawdown, num_trades = trading_env.simulate_trading()
+            profit, drawdown = trading_env.simulate_trading()
             ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
 
             if ratio > max_ratio:
                 max_ratio = ratio
                 best_network = network.state_dict()
 
-            timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
-            validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
+            timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Ratio: {ratio}")
+            validation_results.append([profit, drawdown, ratio, str(x)])
         timestamped_print("torch.save(best_network)")
         torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
 
         queue.put(validation_results)
 
         validation_results_df = pd.DataFrame(
-            columns=["profit", "drawdown", "num_trades", "ratio", "chromosome"],
+            columns=["profit", "drawdown", "ratio", "chromosome"],
             data=validation_results
         )
 
