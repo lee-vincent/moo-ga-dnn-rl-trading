@@ -185,20 +185,6 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"raw_objective_space_ideal_nadir_plot.{date_time}.png"))
     plt.show()
 
-    # perform the normalization
-    nF = (F - approx_ideal) / (approx_nadir - approx_ideal)
-    fl = nF.min(axis=0)
-    fu = nF.max(axis=0)
-    print(f"Scale f1: [{fl[0]}, {fu[0]}]")
-    print(f"Scale f2: [{fl[1]}, {fu[1]}]")
-
-    plt.figure(figsize=(7, 5))
-    plt.scatter(nF[:, 0], nF[:, 1], s=30, facecolors='none', edgecolors='blue')
-    plt.title("Normalized Objective Space")
-    # plt.savefig('normalize_objective_space_ideal_nadir_plot.png')
-    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"normalize_objective_space_ideal_nadir_plot.{date_time}.png"))
-    plt.show()
-
     # below is where test/validation happens - we should already have the pareto set from above.
     trading_env.set_features(prepared_data.validation_tensor)
     trading_env.set_opening_prices(prepared_data.validation_open_prices)
