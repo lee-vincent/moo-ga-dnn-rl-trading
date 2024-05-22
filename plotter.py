@@ -31,13 +31,13 @@ class Plotter():
             with plt.style.context('ggplot'):
                 ax = fig.add_subplot()
                 fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
-        else:
-            ax = fig.add_subplot(projection='3d')
-            fig.subplots_adjust(left=0, right=0.9, top=0.9, bottom=0.1)
-            ax.set_zlabel(zlabel, fontsize='large', fontstyle='italic')
-            if z_percentage:
-                ax.zaxis.set_major_formatter(
-                    matplotlib.ticker.PercentFormatter())
+        # else:
+        #     ax = fig.add_subplot(projection='3d')
+        #     fig.subplots_adjust(left=0, right=0.9, top=0.9, bottom=0.1)
+        #     ax.set_zlabel(zlabel, fontsize='large', fontstyle='italic')
+        #     if z_percentage:
+        #         ax.zaxis.set_major_formatter(
+        #             matplotlib.ticker.PercentFormatter())
 
         ax.set_title(title, fontsize='x-large', weight='bold')
         ax.set_xlabel(xlabel, fontsize='large',
@@ -62,23 +62,19 @@ class Plotter():
         """
         Creates training plots.
         """
-        self.training_figs_axs.append(self._create_fig_ax(title="Population Outcomes", dimensions=3))
+        # self.training_figs_axs.append(self._create_fig_ax(title="Population Outcomes", dimensions=3))
         self.training_figs_axs.append(self._create_fig_ax(title="Population Outcomes"))
         self.training_figs_axs.append(self._create_fig_ax(title="Current Pareto Front (Gen 0)"))
-        self.previous_frontier = self.training_figs_axs[2][1].scatter([], [])  # For removal logic
+        self.previous_frontier = self.training_figs_axs[1][1].scatter([], [])  # For removal logic
 
     def _create_validation_plots(self, x_data: list, y_data: list):
         """
         Generates scatter of validation outcomes for candidate solutions.
         """
-        # fig_3d, ax_3d = self._create_fig_ax("Validation Outcomes", dimensions=3, colorbar=False)
         fig_2d, ax_2d = self._create_fig_ax("Validation Outcomes", colorbar=False)
         ax_2d.scatter(x_data, y_data)
-        # ax_3d.scatter(x_data, y_data, z_data)
-        # fig_3d.canvas.draw()
         fig_2d.canvas.draw()
         timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        # fig_3d.savefig(set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_3D.png"))
         fig_2d.savefig(set_path(self.script_path, f"Output/validation_results/ngen_{self.max_gen}", f"{timestamp}_validation_2D.png"))
 
     def _update_training_plots(self, current_gen: int) -> None:
@@ -89,14 +85,12 @@ class Plotter():
         x_par, y_par = zip(*self.final_pareto_frontier)
         x_par = [-x for x in x_par]
         normalized_gen = (current_gen-1) / self.max_gen
-        self.training_figs_axs[0][1].scatter(
-            x_data, y_data, color=self.cmap(normalized_gen))
-        self.training_figs_axs[1][1].scatter(
-            x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
+        # self.training_figs_axs[0][1].scatter(x_data, y_data, color=self.cmap(normalized_gen))
+        self.training_figs_axs[0][1].scatter(x_data, y_data, color=self.cmap(normalized_gen), alpha=0.6)
         self.previous_frontier.remove()
-        self.previous_frontier = self.training_figs_axs[2][1].scatter(x_par, y_par, color=self.cmap(
+        self.previous_frontier = self.training_figs_axs[1][1].scatter(x_par, y_par, color=self.cmap(
             normalized_gen))
-        self.training_figs_axs[2][1].set_title(
+        self.training_figs_axs[1][1].set_title(
             f'Current Pareto Front (Gen {current_gen})', fontsize='x-large', weight='bold')
 
     def _create_training_outcomes_video(self):
