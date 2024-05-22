@@ -3,13 +3,6 @@ import argparse
 import torch
 import pandas as pd
 from torch.nn import DataParallel
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
-from pymoo.operators.sampling.rnd import FloatRandomSampling
-from pymoo.optimize import minimize
-import multiprocessing as mp
-from pymoo.core.problem import StarmapParallelization
 from prepare_data import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
@@ -35,10 +28,10 @@ def parse_args():
 
     # Add arguments
     parser.add_argument(
-        '--model_name',
+        '--model',
         type=str,
-        default="tqqq_ngen600_pop100_relu64_2024-05-14_21-12-48",
-        help='File name of the model to use for inference'
+        default="./inference_candidates/TQQQ/ngen_600/npop_100/model_0_2024-05-14_21-12-48.pt",
+        help='Path to model to use for inference'
     )
     parser.add_argument(
         '--ticker',
