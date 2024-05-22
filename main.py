@@ -9,6 +9,7 @@ from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.optimize import minimize
 import multiprocessing as mp
+import multiprocessing.pool
 from pymoo.core.problem import StarmapParallelization
 from prepare_data import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
