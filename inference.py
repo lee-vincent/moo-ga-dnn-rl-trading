@@ -2,9 +2,7 @@ from pathlib import Path
 import argparse
 import torch
 import pandas as pd
-from torch.nn import DataParallel
 from prepare_data import DataCollector
-from trading_problem import TradingProblem, PerformanceLogger
 from policy_network import PolicyNetwork
 from trading_environment import TradingEnvironment
 from plotter import Plotter
