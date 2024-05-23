@@ -50,7 +50,6 @@ class DataCollector:
         self.validation_open_prices = None
         self.inference_tensor = None
         self.inference_close_prices = None
-        self.inference_open_prices = None
         # Unwanted columns
         columns_to_drop_before_standardization = ["ticker"]
         columns_to_drop_after_backfill = ["open", "high", "low", "close", "volume", "adjclose"]
@@ -237,21 +236,13 @@ class DataCollector:
             close_prices_inference_start_index = self.df.index.get_loc(model_dates.close_prices_validation_start_date)
             close_prices_inference_end_index = self.df.index.get_loc(model_dates.inference_date)
 
-            open_prices_inference_start_index = self.df.index.get_loc(model_dates.open_prices_validation_start_date)
-            open_prices_inference_end_index = close_prices_inference_end_index
-
             self.inference_tensor = torch.tensor(self.df.iloc[close_prices_inference_start_index:close_prices_inference_end_index + 1].values, dtype=torch.float32)
-            self.inference_open_prices = self.opening_prices.iloc[open_prices_inference_start_index:open_prices_inference_end_index + 1]
-            self.inference_open_prices.to_csv("inference_open_prices.csv", index=True)
             self.inference_close_prices = self.closing_prices.iloc[close_prices_inference_start_index:close_prices_inference_end_index + 1]
-            self.inference_close_prices.to_csv("inference_close_prices.csv", index=True)
 
-            pd.DataFrame(self.inference_tensor).to_csv("inference_tensor.csv", index=True)
-
-            print("close_prices_inference_start_index", close_prices_inference_start_index)
-            print("close_prices_inference_end_index", close_prices_inference_end_index)
-            print("open_prices_inference_start_index", open_prices_inference_start_index)
-            print("open_prices_inference_end_index", open_prices_inference_end_index)
+            # self.inference_close_prices.to_csv("inference_close_prices.csv", index=True)
+            # pd.DataFrame(self.inference_tensor).to_csv("inference_tensor.csv", index=True)
+            # print("close_prices_inference_start_index", close_prices_inference_start_index)
+            # print("close_prices_inference_end_index", close_prices_inference_end_index)
 
         # print("close_prices_training_start_index", close_prices_training_start_index)
         # print("close_prices_training_end_index", close_prices_training_end_index)

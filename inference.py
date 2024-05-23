@@ -75,7 +75,7 @@ if __name__ == '__main__':
     """
     This module performs inference on today's close price with a trained PyTorch model.
     A buy, sell, or hold signal is produced and sent via REST api call.
-    This should be run daily after the market closes at 4PM Easter Time for a valid inference.
+    This should be run daily after the market closes at 4PM Eastern Time for a valid inference.
     Available PyTorch models are available in the ./inference_candidates directory
     """
 
@@ -116,7 +116,6 @@ if __name__ == '__main__':
 
     inference_model = PolicyNetwork([prepared_data.inference_tensor.shape[1], 64, 32, 16, 8, 4, 3])
     inference_model.load_state_dict(torch.load(args.model))
-    # inference_model.to(torch.device("cpu"))
     inference_model.eval()
 
     trading_decisions = []

@@ -73,30 +73,15 @@ class TradingEnvironment:
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
             local_decisions.append(decision)
             current_price = self.opening_prices.iloc[i]  # i was adjusted in prepare_data so no need to add +1
-            # alpaca_finra_transaction_fee_per_share = 0.000166
-            # max_alpaca_finra_transaction_fee_per_trade = 8.30
 
-            # if decision == 0 and (self.balance - alpaca_finra_transaction_fee_per_share) >= current_price:  # can afford to buy at least 1 share including fee
             if decision == 0 and self.balance >= current_price:
                 shares_bought = self.balance // current_price
-                # figure out how many shares including fee you can afford -> we know it is at least 1
-                # while True:
-                #     # Calculate the total transaction cost
-                #     cost_of_shares = current_price * shares_bought
-                #     alpaca_finra_transaction_fee = min((alpaca_finra_transaction_fee_per_share * shares_bought), max_alpaca_finra_transaction_fee_per_trade)
-                #     if ((alpaca_finra_transaction_fee + cost_of_shares) <= self.balance):
-                #         break  # we know we can afford all those shares plus the fee
-                #     else:
-                #         shares_bought -= 1  # the fees are putting us over budget, so try buying 1 less share. we know we can afford at least 1 share including fee
-
                 self.shares_owned += shares_bought
-                # self.balance -= (alpaca_finra_transaction_fee + cost_of_shares)
                 self.balance -= current_price * shares_bought
                 self.num_trades += 1
 
             elif decision == 2 and self.shares_owned > 0:  # Sell
                 self.balance += (current_price * self.shares_owned)
-                # self.balance -= (self.shares_owned * alpaca_finra_transaction_fee_per_share)  # dont think this should ever make balance negative
                 self.shares_owned = 0
                 self.num_trades += 1
 
@@ -106,8 +91,6 @@ class TradingEnvironment:
             drawdown_pct = (current_drawdown / self.max_balance) * 100
             self.drawdown = max(self.drawdown, drawdown_pct)
 
-        # for the purposes of training, need to calculate portfolio value on the last day including owned shares
-        # not including alpaca_finra_transaction_fee here because we just want out portfolio value
         if self.shares_owned > 0:
             self.balance += self.shares_owned * self.opening_prices.iloc[-1]
             self.shares_owned = 0
