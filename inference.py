@@ -1,17 +1,11 @@
-from pathlib import Path
 import argparse
 import torch
-import pandas as pd
 from prepare_data import DataCollector
 from policy_network import PolicyNetwork
-from plotter import Plotter
-import os
 from timestamped_print import timestamped_print
 from model_dates import ModelDates
 from fetch_data import fetch_data
-from set_path import set_path
 import sys
-import matplotlib.pyplot as plt
 
 
 IS_TRAINING = False
@@ -42,33 +36,11 @@ def parse_args():
         default=False,
         help='Save the raw dataset to csv: open, high, low, close, adjclose, volume'
     )
-    parser.add_argument(
-        '--force_cpu',
-        action='store_true',  # This sets the flag to True if it is present.
-        default=False,
-        help='Force training to run on CPU even if a GPU is available'
-    )
 
     # Parse the arguments
     args = parser.parse_args()
 
     return args
-
-
-def map_params_to_model(model, params):
-    """
-    Decodes (i.e. maps) the genes of an individual (x) into the policy network.
-    """
-    idx = 0  # Starting index in the parameter vector
-    new_state_dict = {}  # New state dictionary to load into the model
-    for name, param in model.named_parameters():  # Iterate over each layer's weights and biases in the model
-        num_param = param.numel()  # Compute the number of elements in this layer
-        param_values = params[idx:idx + num_param]  # Extract the corresponding part of `params`
-        param_values = param_values.reshape(param.size())  # Reshape the extracted values into the correct shape for this layer
-        param_values = torch.Tensor(param_values)  # Convert to the appropriate tensor
-        new_state_dict[name] = param_values  # Add to the new state dictionary
-        idx += num_param  # Update the index
-    model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
 if __name__ == '__main__':
@@ -108,7 +80,6 @@ if __name__ == '__main__':
     timestamped_print(f"Open Prices Validation End Date: {model_dates.open_prices_validation_end_date}")
     # Flags
     timestamped_print(f"Save Data: {args.save_data}")
-    timestamped_print(f"Force CPU: {args.force_cpu}")
     # Inference Model
     timestamped_print(f"Inference Model: {args.model}")
 
@@ -125,6 +96,7 @@ if __name__ == '__main__':
         decision = inference_model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
         trading_decisions.append(decision)
 
+    # import pandas as pd
     # pd.DataFrame(trading_decisions).to_csv("trading_decisions_df.csv", index=True)
 
     # trade decision for today (model_dates.inference_date)
