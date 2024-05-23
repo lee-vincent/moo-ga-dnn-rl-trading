@@ -32,4 +32,3 @@ class ModelDates:
 
     def set_inference_date(self, inference_date):
         self.inference_date = inference_date
-        print("model_dates.self.inference_date:", self.inference_date)

@@ -246,6 +246,8 @@ class DataCollector:
             self.inference_close_prices = self.closing_prices.iloc[close_prices_inference_start_index:close_prices_inference_end_index + 1]
             self.inference_close_prices.to_csv("inference_close_prices.csv", index=True)
 
+            pd.DataFrame(self.inference_tensor).to_csv("inference_tensor.csv", index=True)
+
             print("close_prices_inference_start_index", close_prices_inference_start_index)
             print("close_prices_inference_end_index", close_prices_inference_end_index)
             print("open_prices_inference_start_index", open_prices_inference_start_index)

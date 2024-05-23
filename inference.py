@@ -4,7 +4,6 @@ import torch
 import pandas as pd
 from prepare_data import DataCollector
 from policy_network import PolicyNetwork
-from trading_environment import TradingEnvironment
 from plotter import Plotter
 import os
 from timestamped_print import timestamped_print
@@ -28,7 +27,7 @@ def parse_args():
     parser.add_argument(
         '--model',
         type=str,
-        default="./inference_candidates/TQQQ/ngen_600/npop_100/model_0_2024-05-14_21-12-48.pt",
+        default="./inference_candidates/TQQQ/ngen_300/npop_200/model_23_profit_282.19_drawdown_31.14_2024-05-22_20-01-31.pt",
         help='Path to model to use for inference'
     )
     parser.add_argument(
@@ -110,16 +109,35 @@ if __name__ == '__main__':
     # Flags
     timestamped_print(f"Save Data: {args.save_data}")
     timestamped_print(f"Force CPU: {args.force_cpu}")
+    # Inference Model
+    timestamped_print(f"Inference Model: {args.model}")
 
-    prepared_data = DataCollector(stock_data, model_dates)
-    network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
-    network.to(torch.device("cpu"))
-    trading_env = TradingEnvironment(
-        prepared_data.inference_tensor,
-        network,
-        prepared_data.inference_open_prices,
-        True)
+    prepared_data = DataCollector(stock_data, model_dates, IS_TRAINING)
 
-    model_path = './inference_candidates/TQQQ/ngen_300/npop_200/model_23_profit_282.19_drawdown_31.14_2024-05-22_20-01-31.pt'
-    # map_params_to_model ??
+    inference_model = PolicyNetwork([prepared_data.inference_tensor.shape[1], 64, 32, 16, 8, 4, 3])
+    inference_model.load_state_dict(torch.load(args.model))
+    # inference_model.to(torch.device("cpu"))
+    inference_model.eval()
+
+    trading_decisions = []
+    for i in range(len(prepared_data.inference_tensor)):  # this is all the rows in  training_tqqq_prepared.csv
+        feature_vector = prepared_data.inference_tensor[i:i+1]  # Get the feature vector for the current day
+        feature_vector = feature_vector.to(torch.device("cpu"))
+        decision = inference_model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
+        trading_decisions.append(decision)
+
+    # pd.DataFrame(trading_decisions).to_csv("trading_decisions_df.csv", index=True)
+
+    # trade decision for today (model_dates.inference_date)
+    trade_decision = trading_decisions[-1]
+
+    if trade_decision == 0:
+        print(f"Trade decision for {model_dates.inference_date}: {trade_decision} = buy")
+    elif trade_decision == 1:
+        print(f"Trade decision for {model_dates.inference_date}: {trade_decision} = hold")
+    elif trade_decision == 2:
+        print(f"Trade decision for {model_dates.inference_date}: {trade_decision} = sell")
+    else:
+        print("error: trade_decision should be 0, 1, or 2")
+        sys.exit(1)
     exit()
