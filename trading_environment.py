@@ -71,14 +71,14 @@ class TradingEnvironment:
             local_decisions.append(decision)
             current_price = self.opening_prices.iloc[i]  # i was adjusted in prepare_data so no need to add +1
 
-            if decision == 0 and self.balance >= current_price:  # Buy
+            if decision == 0 and self.balance >= current_price:
                 shares_bought = self.balance // current_price
                 self.shares_owned += shares_bought
                 self.balance -= current_price * shares_bought
                 self.num_trades += 1
 
             elif decision == 2 and self.shares_owned > 0:  # Sell
-                self.balance += current_price * self.shares_owned
+                self.balance += (current_price * self.shares_owned)
                 self.shares_owned = 0
                 self.num_trades += 1
 
@@ -88,7 +88,6 @@ class TradingEnvironment:
             drawdown_pct = (current_drawdown / self.max_balance) * 100
             self.drawdown = max(self.drawdown, drawdown_pct)
 
-        # If I still have stock on the last day, sell for cash!
         if self.shares_owned > 0:
             self.balance += self.shares_owned * self.opening_prices.iloc[-1]
             self.shares_owned = 0
@@ -99,4 +98,4 @@ class TradingEnvironment:
         profit_pct = scaled_profit * 100
         self.profit = profit_pct
 
-        return self.profit, self.drawdown, float(self.num_trades)
+        return self.profit, self.drawdown

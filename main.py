@@ -9,6 +9,7 @@ from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.optimize import minimize
 import multiprocessing as mp
+import multiprocessing.pool
 from pymoo.core.problem import StarmapParallelization
 from prepare_data import DataCollector
 from trading_problem import TradingProblem, PerformanceLogger
@@ -21,7 +22,9 @@ from model_dates import ModelDates
 from fetch_data import fetch_data
 from set_path import set_path
 import sys
-import matplotlib.pyplot as plt
+
+
+IS_TRAINING = True
 
 
 def parse_args():
@@ -84,12 +87,12 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
+def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu, ticker):
 
     SCRIPT_PATH = Path(__file__).parent
 
     # Manipulate data and calculate stock measures
-    prepared_data = DataCollector(data, model_dates)
+    prepared_data = DataCollector(data, model_dates, IS_TRAINING)
 
     # Create the policy network
     network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
@@ -155,113 +158,22 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu):
     timestamped_print("Optimization Completed")
     date_time = pd.to_datetime("today").strftime("%Y-%m-%d_%H-%M-%S")
 
-    # Pareto-optimal solutions obtained from the optimization procedure are given by
-    # this is still returning many non-dominated solutions - need to find and take out NDS from training
-    # then push the NDS's through the validation set and show all the scatters
-    F = res.F
-    print("len(F)", len(F))  # this is the number of pareto solutions found we should iterate over this
-    xl, xu = problem.bounds()
-    plt.figure(figsize=(7, 5))
-    plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
-    plt.title("Raw Objective Space")
-    # plt.savefig('raw_objective_space_plot.png')
-    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"raw_objective_space_plot.{date_time}.png"))
-    plt.show()
-
-    # Profit and Drawdown have different scales, so we must normalize using ideal and nadir points
-    approx_ideal = F.min(axis=0)
-    approx_nadir = F.max(axis=0)
-    plt.figure(figsize=(7, 5))
-    plt.scatter(-F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
-    plt.scatter(-approx_ideal[0], approx_ideal[1], facecolors='none', edgecolors='red', marker="*", s=100, label="Ideal Point (Approx)")
-    plt.scatter(-approx_nadir[0], approx_nadir[1], facecolors='none', edgecolors='black', marker="p", s=100, label="Nadir Point (Approx)")
-    plt.title("Raw Objective Space with Ideal and Nadir Points")
-    plt.legend()
-    # plt.savefig('raw_objective_space_ideal_nadir_plot.png')
-    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"raw_objective_space_ideal_nadir_plot.{date_time}.png"))
-    plt.show()
-
-    # perform the normalization
-    nF = (F - approx_ideal) / (approx_nadir - approx_ideal)
-    fl = nF.min(axis=0)
-    fu = nF.max(axis=0)
-    print(f"Scale f1: [{fl[0]}, {fu[0]}]")
-    print(f"Scale f2: [{fl[1]}, {fu[1]}]")
-
-    plt.figure(figsize=(7, 5))
-    plt.scatter(nF[:, 0], nF[:, 1], s=30, facecolors='none', edgecolors='blue')
-    plt.title("Normalized Objective Space")
-    # plt.savefig('normalize_objective_space_ideal_nadir_plot.png')
-    plt.savefig(set_path(SCRIPT_PATH, f"Output/objective_space_plots/ngen_{n_gen}", f"normalize_objective_space_ideal_nadir_plot.{date_time}.png"))
-    plt.show()
-
-    history: pd.DataFrame = pd.DataFrame(performance_logger.history)
-    history.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}.csv"))
-    generations = history["generation"].values
-    objectives = history["objectives"].values
-    # decisions = history["decision_variables"].values
-    # timestamped_print("decisions", decisions)
-    # timestamped_print("decisions", decisions)
-    best = history["best"].values
-
-    historia = []
-
-    for i in range(len(generations)):
-        avg_profit, avg_drawdown, avg_trades = 0, 0, 0
-        objs = objectives[i]
-        for row in objs:
-            avg_profit += row[0]
-            avg_drawdown += row[1]
-            avg_trades += row[2]
-        avg_profit /= len(objs)
-        avg_drawdown /= len(objs)
-        avg_trades /= len(objs)
-        row = [generations[i], avg_profit, avg_drawdown, avg_trades, best[i]]
-        historia.append(row)
-
-    history_df: pd.DataFrame = pd.DataFrame(
-        columns=["generation", "avg_profit", "avg_drawdown", "num_trades", "best"],
-        data=historia
-    )
-    history_df.to_csv(set_path(SCRIPT_PATH, f"Output/performance_log/ngen_{n_gen}", f"{date_time}_avg.csv"))
+    X = res.X
 
     # below is where test/validation happens - we should already have the pareto set from above.
     trading_env.set_features(prepared_data.validation_tensor)
     trading_env.set_opening_prices(prepared_data.validation_open_prices)
-    population = None if res.pop is None else res.pop.get("X")
-
     validation_results = []
-    max_ratio = 0.0
-    best_network = None
-    if population is not None:
-        for i, x in enumerate(population):
-            map_params_to_model(network, x)
-            # torch.save(network.state_dict(), f"candidate_model_{date_time}_ngen_{n_gen}_top_{i}.pt")
-            trading_env.reset()
-            # timestamped_print("trading_env.simulate_trading")
-            profit, drawdown, num_trades = trading_env.simulate_trading()
-            ratio = profit / drawdown if drawdown != 0 else profit / 0.0001
+    for i, _x in enumerate(X):
+        map_params_to_model(network, _x)
+        trading_env.reset()
+        profit, drawdown = trading_env.simulate_trading()
+        timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}")
+        if profit > 0.0:
+            torch.save(network.state_dict(), set_path(SCRIPT_PATH, f"inference_candidates/{ticker.upper()}/ngen_{n_gen}/npop_{n_pop}/", f"model_{i}_profit_{profit:.2f}_drawdown_{drawdown:.2f}_{date_time}.pt"))
+        validation_results.append([profit, drawdown])
 
-            if ratio > max_ratio:
-                best = ratio
-                best_network = network.state_dict()
-
-            timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}, Num Trades: {num_trades}, Ratio: {ratio}")
-            validation_results.append([profit, drawdown, num_trades, ratio, str(x)])
-        timestamped_print("torch.save(best_network)")
-        torch.save(best_network, set_path(SCRIPT_PATH, f"Output/policy_networks/ngen_{n_gen}", f"{date_time}_best.pt"))
-
-        queue.put(validation_results)
-
-        validation_results_df = pd.DataFrame(
-            columns=["profit", "drawdown", "num_trades", "ratio", "chromosome"],
-            data=validation_results
-        )
-
-        # sort by ratio
-        validation_results_df = validation_results_df.sort_values(by="ratio", ascending=False)
-
-        validation_results_df.to_csv(set_path(SCRIPT_PATH, f"Output/validation_results/ngen_{n_gen}", f"{date_time}.csv"))
+    queue.put(validation_results)
 
     pool.close()
 
@@ -278,7 +190,7 @@ if __name__ == '__main__':
     model_dates = ModelDates()
 
     # Get stock data from yahoo_fin
-    stock_data = fetch_data(args.ticker, model_dates, args.save_data)
+    stock_data = fetch_data(args.ticker, model_dates, IS_TRAINING, args.save_data)
     if stock_data is None:
         # yahoo_fin could not find data. Exit program
         sys.exit(1)
@@ -314,7 +226,8 @@ if __name__ == '__main__':
                                                                              args.n_gen,
                                                                              stock_data,
                                                                              model_dates,
-                                                                             args.force_cpu))
+                                                                             args.force_cpu,
+                                                                             args.ticker))
 
     timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()

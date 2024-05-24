@@ -8,6 +8,9 @@ class ModelDates:
         # Therefore we need to pull data from date ranges before the actual training period to provide data we
         # can use to warm up our indicator calculations.
 
+        # Inference Date
+        self.inference_date = None
+
         # Indicator Warm-Up Dates
         self.indicator_warmup_start_date = None  # this needs to be set by fetch_data because every ticker has a different debut date on the exchange
         self.indicator_warmup_end_date = datetime.datetime(2010, 12, 31)  # hardcoded as the trading day immediately preceding close_prices_training_start_date
@@ -26,3 +29,6 @@ class ModelDates:
 
     def set_indicator_warmup_start_date(self, start_date):
         self.indicator_warmup_start_date = start_date
+
+    def set_inference_date(self, inference_date):
+        self.inference_date = inference_date
