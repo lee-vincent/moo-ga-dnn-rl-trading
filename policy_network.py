@@ -8,15 +8,15 @@ class PolicyNetwork(nn.Module):
         self.dims = dimensions  # The dimensions of the network
         self.network = nn.Sequential(
             nn.Linear(self.dims[0], self.dims[1]),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(self.dims[1], self.dims[2]),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(self.dims[2], self.dims[3]),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(self.dims[3], self.dims[4]),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(self.dims[4], self.dims[5]),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(self.dims[5], self.dims[6]),
             nn.Softmax(dim=-1)
         )
