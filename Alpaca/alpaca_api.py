@@ -153,6 +153,12 @@ class CurrentDate:
         month = self._current_datetime.month
         return f'{month:02}'
 
+    def get_year(self):
+        """
+        Get current year represented in four-digit format
+        """
+        return str(self._current_datetime.year)
+
 
 class LongURLs:
 
@@ -163,7 +169,7 @@ class LongURLs:
         """
         self._base_url = "https://data.alpaca.markets/v2/stocks/"
         self._current_datetime = CurrentDate()
-        self._year = str(self._current_datetime.year)
+        self._year = self._current_datetime.get_year()
         self._month = self._current_datetime.get_month()
         self._day = self._current_datetime.get_day()
 
