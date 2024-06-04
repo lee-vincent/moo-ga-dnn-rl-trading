@@ -11,6 +11,13 @@ import sys
 IS_TRAINING = False
 
 
+def validate_activation_function(value):
+    valid_functions = ['ReLu', 'Tanh']
+    if value not in valid_functions:
+        raise argparse.ArgumentTypeError("Activation function must be either 'ReLu' or 'Tanh'")
+    return value
+
+
 def parse_args():
     # Create the parser
     parser = argparse.ArgumentParser(
@@ -21,7 +28,7 @@ def parse_args():
     parser.add_argument(
         '--model',
         type=str,
-        default="./inference_candidates/TQQQ/ngen_300/npop_200/model_23_profit_282.19_drawdown_31.14_2024-05-22_20-01-31.pt",
+        default="./inference_candidates/TQQQ/Tanh/ngen_25/npop_100/model_0_profit_329.39_drawdown_31.14_2024-05-24_14-26-05.pt",
         help='Path to model to use for inference'
     )
     parser.add_argument(
@@ -36,7 +43,12 @@ def parse_args():
         default=False,
         help='Save the raw dataset to csv: open, high, low, close, adjclose, volume'
     )
-
+    parser.add_argument(
+        '--fnc',
+        type=validate_activation_function,
+        default="ReLu",
+        help="Neural Network Activation Function. Options: 'ReLu' or 'Tanh'. Default: 'ReLu'"
+    )
     # Parse the arguments
     args = parser.parse_args()
 
@@ -82,10 +94,12 @@ if __name__ == '__main__':
     timestamped_print(f"Save Data: {args.save_data}")
     # Inference Model
     timestamped_print(f"Inference Model: {args.model}")
+    # PyTorch Activation Function
+    timestamped_print(f"Activation Function: {args.fnc}")
 
     prepared_data = DataCollector(stock_data, model_dates, IS_TRAINING)
 
-    inference_model = PolicyNetwork([prepared_data.inference_tensor.shape[1], 64, 32, 16, 8, 4, 3])
+    inference_model = PolicyNetwork(args.fnc, [prepared_data.inference_tensor.shape[1], 64, 32, 16, 8, 4, 3])
     inference_model.load_state_dict(torch.load(args.model))
     inference_model.eval()
 

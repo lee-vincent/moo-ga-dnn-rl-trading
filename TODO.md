@@ -11,34 +11,18 @@
 
 ## Vinnie
 
-## data normalization
-Example Normalization Process
-Given your dataset with close_price, volume, price_velocity, and price_acceleration, here’s how you could apply StandardScaler:
-```python
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
+model deployment
+run all the data through the bot until the current date
+2011 to current date
+some of the decision making might be path dependent
+	this includes some of the training period and validation period
 
-# Example DataFrame
-data = {
-    'close_price': [120, 130, 125, 128, 132],
-    'volume': [1500, 1600, 1580, 1620, 1700],
-    'price_velocity': [-0.1, 0.2, 0.1, -0.2, 0.15],
-    'price_acceleration': [-0.05, 0.03, 0.02, -0.01, 0.04]
-}
-df = pd.DataFrame(data)
+dont want to filter out buys and sells (on the validation set)
+because if youre out of money you will miss buy or sell signles
+you should determine where the buys and sells are happening
+maybe only spend 50% on a buy
+maybe force 2 sell signals before another buy
 
-# Initialize the StandardScaler
-scaler = StandardScaler()
-
-# Fit and transform the data
-scaled_features = scaler.fit_transform(df)
-
-# Create a new DataFrame with the scaled features
-scaled_df = pd.DataFrame(scaled_features, columns=df.columns)
-
-print(scaled_df)
-
-```
 
 
 ## deployed ubuntu 22.04 LTS with 64GB EBS

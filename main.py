@@ -27,6 +27,13 @@ import sys
 IS_TRAINING = True
 
 
+def validate_activation_function(value):
+    valid_functions = ['ReLu', 'Tanh']
+    if value not in valid_functions:
+        raise argparse.ArgumentTypeError("Activation function must be either 'ReLu' or 'Tanh'")
+    return value
+
+
 def parse_args():
     # Create the parser
     parser = argparse.ArgumentParser(
@@ -64,6 +71,12 @@ def parse_args():
         default=False,
         help='Force training to run on CPU even if a GPU is available'
     )
+    parser.add_argument(
+        '--fnc',
+        type=validate_activation_function,
+        default="ReLu",
+        help="Neural Network Activation Function. Options: 'ReLu' or 'Tanh'. Default: 'ReLu'"
+    )
 
     # Parse the arguments
     args = parser.parse_args()
@@ -87,7 +100,7 @@ def map_params_to_model(model, params):
     model.load_state_dict(new_state_dict)  # Load the new state dictionary into the model
 
 
-def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu, ticker):
+def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu, ticker, activation_function):
 
     SCRIPT_PATH = Path(__file__).parent
 
@@ -95,7 +108,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu, ticker
     prepared_data = DataCollector(data, model_dates, IS_TRAINING)
 
     # Create the policy network
-    network = PolicyNetwork([prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
+    network = PolicyNetwork(activation_function, [prepared_data.data_tensor.shape[1], 64, 32, 16, 8, 4, 3])
 
     timestamped_print(f"CUDA available? {torch.cuda.is_available()}")
 
@@ -170,7 +183,7 @@ def train_and_validate(queue, n_pop, n_gen, data, model_dates, force_cpu, ticker
         profit, drawdown = trading_env.simulate_trading()
         timestamped_print(f"Profit: {profit}, Drawdown: {drawdown}")
         if profit > 0.0:
-            torch.save(network.state_dict(), set_path(SCRIPT_PATH, f"inference_candidates/{ticker.upper()}/ngen_{n_gen}/npop_{n_pop}/", f"model_{i}_profit_{profit:.2f}_drawdown_{drawdown:.2f}_{date_time}.pt"))
+            torch.save(network.state_dict(), set_path(SCRIPT_PATH, f"inference_candidates/{ticker.upper()}/{activation_function}/ngen_{n_gen}/npop_{n_pop}/", f"model_{i}_profit_{profit:.2f}_drawdown_{drawdown:.2f}_{date_time}.pt"))
         validation_results.append([profit, drawdown])
 
     queue.put(validation_results)
@@ -216,6 +229,8 @@ if __name__ == '__main__':
     # Flags
     timestamped_print(f"Save Data: {args.save_data}")
     timestamped_print(f"Force CPU: {args.force_cpu}")
+    # PyTorch Activation Function
+    timestamped_print(f"Activation Function: {args.fnc}")
 
     queue = mp.Queue()
     plotter = Plotter(queue, args.n_gen)
@@ -227,7 +242,8 @@ if __name__ == '__main__':
                                                                              stock_data,
                                                                              model_dates,
                                                                              args.force_cpu,
-                                                                             args.ticker))
+                                                                             args.ticker,
+                                                                             args.fnc))
 
     timestamped_print("train_and_validate_process.start()")
     train_and_validate_process.start()
