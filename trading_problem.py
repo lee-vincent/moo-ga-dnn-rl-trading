@@ -30,9 +30,8 @@ class TradingProblem(ElementwiseProblem):
 
         # Calculating the number of variables
         self.n_vars = sum([(network_dims[i] + 1) * network_dims[i + 1] for i in range(len(network_dims) - 1)])
-        # print("num vars", self.n_vars)
         # xl=-1.0, xu=1.0 is telling pymoo the lower and upper bounds of each variable are in the range of -1 and 1.
-        super().__init__(n_var=self.n_vars, n_obj=3, xl=-1.0, xu=1.0)
+        super().__init__(n_var=self.n_vars, n_obj=2, xl=-1.0, xu=1.0)
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
@@ -44,9 +43,9 @@ class TradingProblem(ElementwiseProblem):
         self._decode_model(x)
         # print("type(x)", type(x))
         # print("x:", x)
-        profit, drawdown, num_trades = self.environment.simulate_trading()
+        profit, drawdown = self.environment.simulate_trading()
         # print("profit:", profit, "drawdown:", drawdown, "num_trades:", num_trades)
-        out["F"] = np.array([-profit, drawdown, -num_trades])
+        out["F"] = np.array([-profit, drawdown,])
 
     def _decode_model(self, params):
         """
@@ -78,20 +77,14 @@ class PerformanceLogger(Callback):
         self.queue = queue
 
     def notify(self, algorithm):
-        F = algorithm.pop.get("F")  # The objective values
+        F = algorithm.pop.get("F")  # The objective values #algorithm.pop.non_dominated_inds
         X = algorithm.pop.get("X")  # The decision variables
 
-        # dff = pd.DataFrame(F)
-        # dff.to_csv("F.csv")
-
-        # df = pd.DataFrame(X)
-        # df.to_csv("X.csv")
         # Log the objective values (and any additional information)
         self.history.append({
             "generation": algorithm.n_gen,
             "objectives": F.copy(),
             "decision_variables": X.copy(),
-            "best": F.min(),
         })
         # Add objective data to queue for plotting
         self.queue.put(self.history[-1]["objectives"])

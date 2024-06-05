@@ -1,10 +1,3 @@
-# TODO
-sigmoid function to normalize between 0 and 1?
-different activation function variants of ReLU?
-
-
-
-
 # Stock Market AI
 
 This is an artificial intellegence developed via PyTorch that simulates stock trading using the TQQQ(UltraPro QQQ) security. The agent was taught using reinforcement learning with training and testing data extracted from [yahoo_fin](https://theautomatic.net/yahoo_fin-documentation/).

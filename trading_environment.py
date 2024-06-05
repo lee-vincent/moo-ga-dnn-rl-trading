@@ -61,27 +61,24 @@ class TradingEnvironment:
 
         self.reset()
         local_decisions = []
-
+        torch_device = "cuda" if (torch.cuda.is_available() and not self.force_cpu) else "cpu"
         # Simulate trading over the dataset
         # print("self.features", self.features)
         for i in range(len(self.features)):  # this is all the rows in  training_tqqq_prepared.csv
             feature_vector = self.features[i:i+1]  # Get the feature vector for the current day
-            if self.force_cpu:
-                feature_vector = feature_vector.to(torch.device("cpu"))
-            else:
-                feature_vector = feature_vector.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+            feature_vector = feature_vector.to(torch.device(torch_device))
             decision = self.model(feature_vector).argmax().item()  # 0=buy, 1=hold, 2=sell
             local_decisions.append(decision)
             current_price = self.opening_prices.iloc[i]  # i was adjusted in prepare_data so no need to add +1
 
-            if decision == 0 and self.balance >= current_price:  # Buy
+            if decision == 0 and self.balance >= current_price:
                 shares_bought = self.balance // current_price
                 self.shares_owned += shares_bought
                 self.balance -= current_price * shares_bought
                 self.num_trades += 1
 
             elif decision == 2 and self.shares_owned > 0:  # Sell
-                self.balance += current_price * self.shares_owned
+                self.balance += (current_price * self.shares_owned)
                 self.shares_owned = 0
                 self.num_trades += 1
 
@@ -91,7 +88,6 @@ class TradingEnvironment:
             drawdown_pct = (current_drawdown / self.max_balance) * 100
             self.drawdown = max(self.drawdown, drawdown_pct)
 
-        # If I still have stock on the last day, sell for cash!
         if self.shares_owned > 0:
             self.balance += self.shares_owned * self.opening_prices.iloc[-1]
             self.shares_owned = 0
@@ -102,4 +98,4 @@ class TradingEnvironment:
         profit_pct = scaled_profit * 100
         self.profit = profit_pct
 
-        return self.profit, self.drawdown, float(self.num_trades)
+        return self.profit, self.drawdown
