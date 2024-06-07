@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument(
         '--fnc',
         type=validate_activation_function,
-        default="ReLu",
+        default="Tanh",
         help="Neural Network Activation Function. Options: 'ReLu' or 'Tanh'. Default: 'ReLu'"
     )
     # Parse the arguments
