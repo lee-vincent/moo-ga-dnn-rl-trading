@@ -1,30 +1,5 @@
 # TODO
 
-## Eliza
-- consolidate Instructions/installation_and_instructions.pdf into the README
-
-## Jack
-
-## Matt
-
-## Michelle
-
-## Vinnie
-
-model deployment
-run all the data through the bot until the current date
-2011 to current date
-some of the decision making might be path dependent
-	this includes some of the training period and validation period
-
-dont want to filter out buys and sells (on the validation set)
-because if youre out of money you will miss buy or sell signles
-you should determine where the buys and sells are happening
-maybe only spend 50% on a buy
-maybe force 2 sell signals before another buy
-
-
-
 ## deployed ubuntu 22.04 LTS with 64GB EBS
 https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#system-requirements
 follow the ubuntu 22.04 requirements
