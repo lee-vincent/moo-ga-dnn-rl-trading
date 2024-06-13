@@ -1,5 +1,9 @@
-# Stock Market AI
+# Stock Market Trading Using Artificial Intelligence
 
+This repository implements an end-to-end AI pipeline that trains a deep neural network via reinforcement learning driven by multi-objective optimization.<br>
+<br>
+The AI pipeline consists of the standard phases: **data prep > training > simulation > inference**<br>
+<br>
 This is an artificial intellegence developed via PyTorch that simulates stock trading using the TQQQ(UltraPro QQQ) security. The agent was taught using reinforcement learning with training and testing data extracted from [yahoo_fin](https://theautomatic.net/yahoo_fin-documentation/).
 
 The agent's goal is to maximize profit and minimize drawdown by simulating stock trade of the TQQQ with historical stock data from 2022-01-01 to 2023-12-31. Training data consists of using historical stock data from 2011-01-01 to 2021-12-31.
@@ -13,8 +17,7 @@ Data visualizations are shown at the end that displays profits and drawdowns as 
 - Michelle Huang
 - Eliza Flores
 - Matthew Jung
-
-## main branch
+## 1/1/2024 - 3/1/2024: main branch
 - Sullivan Myer
 - Steven Crowther
 - Andrew Perez
