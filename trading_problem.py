@@ -28,8 +28,16 @@ class TradingProblem(ElementwiseProblem):
         else:
             network_dims = network.dims
 
-        # Calculating the number of variables
-        self.n_vars = sum([(network_dims[i] + 1) * network_dims[i + 1] for i in range(len(network_dims) - 1)])
+        # n_vars = the total number of weights and biases in the neural network
+        # weights and biases are adjusted/mutated in the NSGA-II algorithm?
+        # self.n_vars = sum([(network_dims[i] + 1) * network_dims[i + 1] for i in range(len(network_dims) - 1)])
+        self.n_vars = 0
+        for i in range(len(network_dims) - 1):
+            a = (network_dims[i] + 1)
+            b = (network_dims[i + 1])
+            print(f"a = {a}, b = {b}")
+            self.n_vars += a * b
+            print(f"i = {i}, self.n_vars = {self.n_vars}")
         # xl=-1.0, xu=1.0 is telling pymoo the lower and upper bounds of each variable are in the range of -1 and 1.
         super().__init__(n_var=self.n_vars, n_obj=2, xl=-1.0, xu=1.0)
 
@@ -40,6 +48,12 @@ class TradingProblem(ElementwiseProblem):
         Profit and drawdown are calculated based on the trading decisions agent makes in environment.
         The objectives are set to the profit and the negative drawdown.
         """
+        # _evaluate is called from minimize() in main.py
+        # "x" is an individial from the pop_size population
+        # each individual is randomly initialized by NSGA-II's FloatRandomSampling()
+        # each individual "x" has 6315 genes (the weights and bias values from the nerual network)
+        # NSGA-II does mutation and crossover on highest performing individuals and
+        # that is how genes (neural network weights and bias values) get changed (how learning happens)?
         self._decode_model(x)
         # print("type(x)", type(x))
         # print("x:", x)
