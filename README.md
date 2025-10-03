@@ -11,6 +11,8 @@ The agent's goal is to maximize profit and minimize drawdown by simulating stock
 Data visualizations are shown at the end that displays profits and drawdowns as well as trade counts for the best solution candidates based on what the agent has chosen for each generation. These solution candidates have been optimized via the NSGA-2 Algorithm(Non-Sorted Genetic Algorithm) via the PyMoo library.
 
 # Developers
+## 6/2/2024 - 10/2/2025: main branch
+- Vincent Lee
 ## 3/1/2024 - 6/1/2024: main-v2 branch
 - Vincent Lee
 - Jack Youssef
